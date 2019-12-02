@@ -46,6 +46,7 @@ function die() {
     document.getElementById("lives").innerText = "0";
     dieSound.replay();
     setTimeout(function() {
+        writeCharTo("⛨", 0, player.position[0], player.position[1], player.position[2], player.position[3]);
         location.reload()
     }, 5000)
 
@@ -279,7 +280,7 @@ function Load() {
             this.direction = dir;
             var d = this.getMoveDirection(dir);
             this.cellData = (getChar(d[0], d[1], d[2], d[3]));
-            if (this.cellData !== " " && this.cellData !== " " && this.cellData !== "=" && this.cellData !== "-" && this.cellData !== "‖" && this.cellData !== "|") {
+            if (this.cellData !== " " && this.cellData !== " " && this.cellData !== "=" && this.cellData !== "-" && this.cellData !== "‖" && this.cellData !== "|" && this.cellData !== "⛨") {
                 if (this.cellData !== "💥") { 
                 points += ~~(Math.random() * 1000);
                
@@ -523,8 +524,9 @@ function Load() {
 
                 currentKey = null;
             }
-            checkPlayerCell();
+            
             renderTiles()
+            checkPlayerCell();
             tick();
 
 
