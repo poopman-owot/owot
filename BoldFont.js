@@ -5,7 +5,6 @@ document.ondblclick = function () { bold = !bold }
 w.on("writeBefore", function (e) {
     if (bold) {
         if (a.indexOf(e.char) > -1) {
-            w.moveCursor("right", true);
             e.char = b[a.indexOf(e.char)]
         }
     }
