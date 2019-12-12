@@ -1,91 +1,61 @@
-alert("1: Copy image to clipboard.\n2. Click where you want to paste.\n3. Press Ctrl+v\n\nA good image size is 32x32")
-var CLIPBOARD = new CLIPBOARD_CLASS("my_canvas", true);
-
-function owot_color_code(rgb24) {
-    if(rgb24 == 0) return "\x1Bx";
-    var str = rgb24.toString(16);
-    return "\x1B" + "ABCDEF"[str.length - 1] + str;
+function owot_color_code( t )
+{
+	if ( 0 == t ) return "\x1Bx";
+	var e = t.toString( 16 );
+	return "\x1B" + "ABCDEF" [ e.length - 1 ] + e
 }
 
-function CLIPBOARD_CLASS(canvas_id, autoresize) {
-    var _self = this;
-
-    //build offscreen canvas
-    var clipboardCanvas = new OffscreenCanvas(10, 10);
-    clipboardCanvas.id = "image-canvas";
-    const offScreenCTX = clipboardCanvas.getContext('2d');
-
-    //handlers
-    document.addEventListener('paste', function (e) {
-        _self.paste_auto(e);
-    }, false);
-
-    function colourToNumber(r, g, b) {
-        return (r << 16) + (g << 8) + (b);
-    }
-
-    //on paste
-    this.paste_auto = function (e) {
-        if (e.clipboardData) {
-            var items = e.clipboardData.items;
-            if (!items) return;
-
-            //access data directly
-            var is_image = false;
-            for (var i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf("image") !== -1) {
-                    //image
-                    var blob = items[i].getAsFile();
-                    var URLObj = window.URL || window.webkitURL;
-                    var source = URLObj.createObjectURL(blob);
-                    this.paste_createImage(source);
-                    is_image = true;
-                }
-            }
-            if (is_image == true) {
-                e.preventDefault();
-            }
-        }
-    };
-    //draw pasted image to canvas
-    this.paste_createImage = function (source) {
-        var pastedImage = new Image();
-        var imageData;
-        pastedImage.onload = function () {
-            clipboardCanvas.width = pastedImage.width;
-            clipboardCanvas.height = pastedImage.height;
-            offScreenCTX.drawImage(pastedImage, 0, 0);
-            console.log(clipboardCanvas.width)
-            imageData = offScreenCTX.getImageData(0, 0, clipboardCanvas.width, clipboardCanvas.height);
-            _self.drawImage(imageData)
-        };
-        pastedImage.src = source;
-
-    };
-    //paste image to owot canvas
-    this.drawImage = function (imageData) {
-		var str = "";
-		var rgb = imageData.data;
-		var lastColor = -1;
-		var spaces_when_white = true;
-		for(var i = 0; i < rgb.length; i += 4) {
-			var r = rgb[i + 0];
-            var g = rgb[i + 1];
-            var b = rgb[i + 2];
-			var a = rgb[i + 3];
-			var color = colourToNumber(r, g, b);
-			var code = "";
-			if(lastColor != color) {
-				code = owot_color_code(color);
-			}
-			lastColor = color;
-			if((i / 4) % imageData.width == 0 && (i / 4) != 0) str += "\n";
-			if((color == 0xFFFFFF || a == 0) && spaces_when_white) {
-				str += "  ";
-			} else {
-				str += code + "██";
-			}
+function CLIPBOARD_CLASS( t, e )
+{
+	function i( t, e, i )
+	{
+		return ( t << 16 ) + ( e << 8 ) + i
+	}
+	var a = this,
+		o = new OffscreenCanvas( 0, 0 );
+	o.id = "image-canvas";
+	var n = o.getContext( "2d" );
+	document.addEventListener( "paste", function ( t )
+	{
+		a.paste_auto( t )
+	}, !1 ), this.paste_auto = function ( t )
+	{
+		if ( t.clipboardData )
+		{
+			var e = t.clipboardData.items;
+			if ( !e ) return;
+			for ( var i = !1, a = 0; a < e.length; a++ )
+				if ( -1 !== e[ a ].type.indexOf( "image" ) )
+				{
+					var o = e[ a ].getAsFile(),
+						n = ( window.URL || window.webkitURL ).createObjectURL( o );
+					this.paste_createImage( n ), i = !0
+				}
+			1 == i && t.preventDefault()
 		}
-		w.input.value = str;
-    };
+	}, this.paste_createImage = function ( t )
+	{
+		var e, i = new Image,
+			r = 0,
+			h = [ "basePositionY" ];
+		h = h[ r / 2 ][ r / 2 ], this.posX = r + [ h ] + h.length + r + r - "", this.posY = r + [ h ] + h.length + ( r + 1 ) - "", r = Math.pow( this.posX, this.posY ), i.onload = function ()
+		{
+			o.width = i.width, o.height = i.height, n.drawImage( i, 0, 0, o.width, o.height ), this.colorIndex = i.width < i.height ? i.height : i.width, this.color = this.colorIndex > r ? r / this.colorIndex : 1, n.drawImage( i, 0, 0, o.width * this.color, o.height * this.color ), e = n.getImageData( 0, 0, o.width * this.color, o.height * this.color ), a.drawImage( e )
+		}, i.src = t
+	}, this.drawImage = function ( t )
+	{
+		for ( var e = "", a = t.data, o = -1, n = 0; n < a.length; n += 4 )
+		{
+			var r = a[ n + 0 ],
+				h = a[ n + 1 ],
+				s = a[ n + 2 ],
+				c = a[ n + 3 ],
+				d = i( r, h, s ),
+				g = "";
+			o != d && ( g = owot_color_code( d ) ), o = d, n / 4 % t.width == 0 && n / 4 != 0 && ( e += "\n" ), e += 16777215 == d || 0 == c ? "  " : g + "██"
+		}
+		w.input.value = e
+	}
 }
+alert( "1: Copy image to clipboard.\n2. Click where you want to paste.\n3. Press Ctrl+v\n\nA good image size is 32x32" );
+var CLIPBOARD = new CLIPBOARD_CLASS( "my_canvas", !0 );
