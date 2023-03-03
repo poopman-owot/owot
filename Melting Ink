@@ -1,0 +1,60 @@
+document.addEventListener("keydown", function() {
+  console.log(cursorCoords);
+  var X = cursorCoords[0];
+  var Y = cursorCoords[1];
+  var x = cursorCoords[2];
+  var y = cursorCoords[3];
+  var requestId = null;
+
+  function animate() {
+    requestId = requestAnimationFrame(animate);
+    var Down_y = y + 1;
+    var Left_x = x - 1;
+    var Right_x = x + 1;
+    var Down_Y = Y;
+    var LeftRight_X = X;
+    //look down
+    if (Down_y > 7) {
+      Down_y = 0;
+      Down_Y++;
+    }
+    //if not empty
+    if (getChar(X, Down_Y, x, Down_y) !== " ") {
+      //look right
+      if (Left_x > 15) {
+        Left_x = 0;
+        LeftRight_X++;
+      }
+      //if not empty
+      if (getChar(LeftRight_X, Y, Left_x, y) !== " ") {
+        //look right
+        if (Right_x < 0) {
+          Right_x = 15;
+          LeftRight_X--;
+        }
+        if (getChar(LeftRight_X, Y, Right_x, y) !== " ") {
+          //you are stuck
+          cancelAnimationFrame(requestId);
+          return;
+        } else {
+          //draw right
+          X = LeftRight_X;
+          x = Right_x;
+          writeCharTo("█", "#000", X, Y, x, y)
+        }
+      } else {
+        //draw left
+        X = LeftRight_X;
+        x = Left_x;
+        writeCharTo("█", "#000", X, Y, x, y)
+      }
+    } else {
+      //draw down
+      Y = Down_Y;
+      y = Down_y;
+      writeCharTo("█", "#000", X, Y, x, y)
+    }
+  }
+  
+  animate();
+});
