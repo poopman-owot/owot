@@ -1,454 +1,594 @@
-// global variables
-let score, lives, level, time, player, enemies, platforms;
-var movement_amount = 0.1;
+//--------------------------------------------INIT Variables---------------------------------------------------------------------------------
+const characterList = {};
+w.input.disabled = true
+cursorEnabled = false;
 
-function init() {
-  // initialize variables
-  // prevent unwanted user input
-  document.oncontextmenu = function(e) {
-    e.preventDefault()
+//--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
+
+function CellToPixelCoords(cellCoords = [0, 0, 0, 0])
+// arguments can either be [x, y, z, w] or x, y, z, w
+{
+
+  let x, y, z, w;
+  // If input is an array
+  if (Array.isArray(cellCoords) && cellCoords.length < 5) {
+    [x = 0, y = 0, z = 0, w = 0] = cellCoords;
   }
-  //(cursorCoords[0] * tileW) + (cursorCoords[2] * cellW) + positionX + Math.trunc(owotWidth / 2);
-  doZoom(100);
-  w.input.disabled = true
-  cursorEnabled = false;
-  //scrollingEnabled = false;
-  //draggingEnabled = false;
-
-  // set up game loop
-  // initialize game elements
-
-  // add event listeners for keyboard input
-  document.addEventListener("keydown", keyDownHandler, false);
-  document.addEventListener("keyup", keyUpHandler, false);
-
-  // start the game loop
-  requestAnimationFrame(gameLoop);
-}
-
-class Player {
-  constructor(x = 0, y = 0, z = 0, w = 0) {
-    this.location = [x, y, z, w];
-    this.destination = [x, y, z, w];
-    this.velY = 0;
-    this.velX = 0;
-    this.isJumping = false;
-    this.jumped = false;
-    this.isCrouching = false;
-    this.isMovingLeft = false;
-    this.isMovingRight = false;
-    this.isFacingLeft = false;
-    this.isSpecialMove = false;
-    this.falling = false;
-    this.char = " "
-    this.blockedBy = "█▓░▒qwertyuiopasdfghjklzxcvbnm!@#$%^&*()1234567890_+:;<>,.?/-=~\"`";
-    this.jumpFrames = 30
-    this.img = "";
+  // If input is four separate arguments
+  else if (arguments.length < 5) {
+    [x = 0, y = 0, z = 0, w = 0] = arguments;
   }
-
-
-
-
-  updateMovement() {
-
-    this.velX = lerp(this.velX, 0, 0.05);
-    this.velY = lerp(this.velY, 0, 0.01);
-
-    console.log(this.velY)
-    if (!this.isMovingLeft && !this.isMovingRight && !this.isCrouching && !this.isJumping && !this.isSpecialMove && !this.falling) {
-      //  this.img = "https://i.imgur.com/3AbgTGV.png";
-
-    }
-
-    drawPlayer(player, " ")
-    if (this.isMovingLeft) {
-      this.isFacingLeft = true;
-      this.img = "https://i.imgur.com/FAlNx6v.gif"
-
-      this.destination = correctLocation(this.destination);
-
-      if (!isBlocked(this.destination, this.blockedBy)) {
-        this.velX -= (movement_amount / 10);
-
-        if (this.velX < -0.5) {
-          this.velX = -0.5;
-        }
-        this.location = this.destination;
-      } else {
-        this.velX = lerp(this.velX, 0, 0.1);
-
-        this.location[0] = X;
-        this.location[1] = Y;
-        this.location[2] = z;
-        this.location[3] = w;
-      }
-
-    }
-
-    if (this.isMovingRight) {
-      this.img = "https://i.imgur.com/FAlNx6v.gif"
-
-      this.destination = correctLocation(this.destination);
-
-      if (!isBlocked(this.destination, this.blockedBy)) {
-        this.velX += (movement_amount / 10);
-        if (this.velX > 0.5) {
-          this.velX = 0.5;
-        }
-        this.location = this.destination;
-      } else {
-        this.velX = lerp(this.velX, 0, 0.1);
-        this.location[0] = X;
-        this.location[1] = Y;
-        this.location[2] = z;
-        this.location[3] = w;
-      }
-
-    }
-
-    if (this.isCrouching) {
-      this.img = "https://i.imgur.com/KJik4SF.png"
-      // this.location[3] += movement_amount;
-    }
-
-    if (this.isJumping) {
-      this.img = "https://i.imgur.com/Ds1wIuU.png"
-
-      this.velY = -movement_amount;
-
-      this.destination = correctLocation(this.destination);
-
-      if (!isBlocked(this.destination, this.blockedBy)) {
-
-        this.location = this.destination;
-      } else {
-        this.velY = 0;
-        this.isJumping = false;
-        this.jumpFrames = 0;
-        this.location[0] = X;
-        this.location[1] = Y;
-        this.location[2] = z;
-        this.location[3] = w;
-      }
-
-    }
-    if (!this.isJumping) {
-      this.velY += (movement_amount / 10);
-      if (this.velY > 1) {
-        this.velY = 1;
-      }
-
-      this.destination = correctLocation(this.destination);
-
-      if (!isBlocked(this.destination, this.blockedBy)) {
-        this.img = "https://i.imgur.com/6iwR8Wp.png"
-        this.location = this.destination;
-        this.falling = true;
-      } else {
-        this.falling = false;
-        player.jumped = false;
-        this.location[0] = X;
-        this.location[1] = Y;
-        this.location[2] = z;
-        this.location[3] = w;
-      }
-
-    }
-    const [X, Y, z, w] = this.location;
-    this.destination[0] = X;
-    this.destination[1] = Y;
-    this.destination[2] = z;
-    this.destination[3] += this.velY
-    //this.destination[2] += this.velX;
-    this.destination = correctLocation(this.destination);
-
-    if (!isBlocked(this.destination, this.blockedBy)) {
-      if (this.velY > 0) {
-        scroller(0, 1);
-      } else if (this.velY < 0) {
-        scroller(0, -1);
-      }
-
-      this.location = this.destination;
-    } else {
-      this.destination[3] = w
-      this.velY = 0;
-      this.isJumping = false;
-      this.jumpFrames = 0;
-      player.jumped = false;
-
-    }
-
-    this.destination[0] = X;
-    this.destination[2] += this.velX;
-    this.destination = correctLocation(this.destination);
-
-    if (!isBlocked(this.destination, "█▓░▒qwertyuiopasdfghjklzxcvbnm!@#$%^&*()1234567890_+:;<>,.?/-=~\"`")) {
- if (this.velX > 0.1) {
-        scroller(1, 0);
-      } else if (this.velX < -0.1) {
-        scroller(-1, 0);
-      }
-      this.location = this.destination;
-    } else {
-      this.velX = 0;
-      this.destination[2] = z
-
-    }
+  // Invalid input
+  else {
+    console.error('CellToPixelCoords: Invalid cellCoords. Arguments can either be [x, y, z, w] or x, y, z, w. Your cellCoords was: ' + cellCoords);
+    return;
   }
+  let X = ((Math.round(x) * tileW) + (z) * cellW) + Math.round(positionX) + Math.round(owotWidth / 2);
+  let Y = ((Math.round(y) * tileH) + (w) * cellH) + Math.round(positionY) + Math.round(owotHeight / 2);
+  return [X, Y];
 }
 
-function gameLoop() {
-  // update game state
-  update();
 
-  // render game elements
-  render();
+function PixelToCellCoords(pixelCoords = [0, 0]) {
+  // arguments can either be [x, y] or x, y
 
-  // handle user input
-  handleInput();
+  let x, y;
 
-  // check for collisions
-  collisions();
-
-  // update player's score
-  scoreUpdate();
-
-  // update player's lives
-  livesUpdate();
-
-  // check if level is complete
-  levelComplete();
-
-  // check if game is over
-  gameOver();
-
-  // call the game loop again using requestAnimationFrame
-  requestAnimationFrame(gameLoop);
-}
-
-function update() {
-  if (player.isJumping) {
-    // play jump animation
-    player.jumpFrames--;
-    if (player.jumpFrames === 0) {
-      player.isJumping = false;
-      player.velY = 0;
-      // end jump animation
-    }
+  // If input is an array
+  if (Array.isArray(pixelCoords) && pixelCoords.length < 3) {
+    [x = 0, y = 0] = pixelCoords;
   }
-  player.updateMovement();
-  // update player movement
-  // update enemy behavior
-  // update platform movement
-}
-
-function render() {
-
-  drawPlayer(player, player.char);
-
-  renderPlayer(player);
-  // draw player
-  // draw enemies
-  // draw platforms
-}
-
-function handleInput() {
-  // handle keyboard or gamepad input
-}
-
-function collisions() {
-  // check for player-enemy collisions
-  // check for player-platform collisions
-}
-
-function scoreUpdate() {
-  // update score based on collected coins or defeated enemies
-}
-
-function livesUpdate() {
-  // update lives based on taking damage or collecting power-ups
-}
-
-function levelComplete() {
-  // transition to next level if necessary
-}
-
-function gameOver() {
-  // display game over screen if necessary
-}
-
-function correctLocation(location) {
-  var outlocation = location
-  if (Math.round(location[2]) > 15) {
-    location[2] = 0;
-    outlocation[0] += 1;
+  // If input is two separate arguments
+  else if (arguments.length < 3) {
+    [x = 0, y = 0] = arguments;
   }
-  if (Math.round(location[2]) < 0) {
-    location[2] = 15;
-    outlocation[0] -= 1;
-  }
-  if (Math.round(location[3]) > 7) {
-    location[3] = 0;
-    outlocation[1] += 1;
-  }
-  if (Math.round(location[3]) < 0) {
-    location[3] = 7;
-    outlocation[1] -= 1;
-  }
-  return outlocation
-}
-
-function keyDownHandler(event) {
-  // handle key presses
-  switch (event.keyCode) {
-    case 87: // W for jumping
-      if (!player.jumped) {
-        player.isJumping = true;
-
-        player.jumpFrames = 35;
-      }
-      player.jumped = true;
-      break;
-    case 65: // A for moving left
-      player.isMovingLeft = true;
-      player.isMovingRight = false;
-      player.isFacingLeft = true;
-
-      // player.moveLeft();
-      break;
-    case 68: // D for moving right
-      player.isMovingRight = true;
-      player.isMovingLeft = false;
-      player.isFacingLeft = false;
-
-      // player.moveRight();
-      break;
-    case 83: // S for crouching
-      player.isCrouching = true;
-      break;
-    case 32: // spacebar for special move
-      player.specialMove();
-      break;
-    default:
-      // do nothing
-  }
-}
-
-function localWriteChar(tileX, tileY, charX, charY, char, color) {
-  if (!tiles[tileY + "," + tileX]) return;
-  var tile = tiles[tileY + "," + tileX];
-  var content = advancedSplit(tile.content);
-  content[charY * tileC + charX] = char;
-  tile.content = content.join("");
-  if (!color) color = 0;
-  if (!tile.properties.color) tile.properties.color = Object.assign([], blankColor);
-  tile.properties.color[charY * tileC + charX] = color;
-  renderTile(tileX, tileY, true);
-}
-
-function isBlocked(destination, blocking) {
-  const char = getChar(Math.round(destination[0]), Math.round(destination[1]), Math.round(destination[2]), Math.round(destination[3]));
-  return !" ".includes(char);
-}
-
-function drawPlayer(player, character) {
-  const char = character;
-  const tileX = player.location[0];
-  const tileY = player.location[1];
-  const charX = player.location[2];
-  const charY = player.location[3];
-
-  const charColor = "white"; // choose a color for the player character
-  const charBgColor = "transparent"; // choose a background color for the player character
-  // Call the existing function writeCharTo with the player's coordinates and colors
-
-  //writeCharTo(char, charColor, Math.round(tileX), Math.round(tileY), Math.round(charX), Math.round(charY), false, 0, charBgColor);
-
-  renderTiles();
-}
-const img = new Image();
-var imgX = -1;
-var imgY = -1;
-var CorrectedimgX = -1;
-var CorrectedimgY = -1;
-img.src = "https://i.imgur.com/FAlNx6v.gif";
-
-function renderPlayer(player) {
-  img.transform = "scaleX(-1)";
-  if (img.src !== player.img) {
-    img.src = player.img
+  // Invalid input
+  else {
+    console.error('PixelToCellCoords: Invalid pixelCoords. Arguments can either be [x, y] or x, y. Your pixelCoords was: ' + pixelCoords);
+    return;
   }
 
+  return getTileCoordsFromMouseCoords(x, y);
+}
 
+function Lerp(start = 0, end = 0, amt = 0.5, roundResult = false) {
+  let value = (1 - amt) * start + amt * end;
+  if (roundResult) {
+    value = Math.round(value);
+  }
+  return value;
+}
 
+function LerpArray(startArray, endArray = startArray * 0, amt = 0.5, roundResult = false) {
+  let resultArray = [];
 
-  const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
-
-  // Get the canvas context
-  const ctx = canvas.getContext('2d');
-
-  // Mirror the image horizontally
-  ctx.translate(img.width, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(img, 0, 0, img.width, img.height);
-
-  // Draw the mirrored image on the original canvas
-
-
-  imgX = ((player.location[0] * tileW) + (player.location[2] * cellW) + positionX + Math.trunc(owotWidth / 2));
-  imgY = ((player.location[1] * tileH) + (player.location[3] * cellH) + positionY + Math.trunc(owotHeight / 2)) - tileH / 16;
-
-  if (player.isFacingLeft) {
-    owotCtx.drawImage(canvas, imgX, imgY, (tileW / 16), (tileH / 8));
-  } else {
-    owotCtx.drawImage(img, imgX, imgY, (tileW / 16), (tileH / 8));
+  for (let i = 0; i < startArray.length; i++) {
+    let value = Lerp(startArray[i], endArray[i], amt, roundResult);
+    resultArray.push(value);
   }
 
-  CorrectedimgX = (Math.round(player.location[0]) * tileW) + (Math.round(player.location[2]) * cellW) + Math.round(positionX) + Math.trunc(owotWidth / 2);
-  CorrectedimgY = (Math.round(player.location[1]) * tileH) + (Math.round(player.location[3]) * cellH) + Math.round(positionY) + Math.trunc(owotHeight / 2);
-
+  return resultArray;
 }
 
-function lerp(start, end, amt) {
-  return (1 - amt) * start + amt * end
-}
+function ScrollWorld(offset = [0, 0]) {
+  let x, y;
 
-function scroller(x, y) {
+  // If input is an array
+  if (Array.isArray(offset) && offset.length < 3) {
+    [x = 0, y = 0] = offset;
+  }
+  // If input is two separate arguments
+  else if (arguments.length < 3) {
+    [x = 0, y = 0] = arguments;
+  }
+  // Invalid input
+  else {
+    console.error('ScrollWorld: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ' + offset);
+    return;
+  }
   var deltaX = Math.trunc(x);
   var deltaY = Math.trunc(y);
 
   positionY -= deltaY;
   positionX -= deltaX;
+
   w.emit("scroll", {
     deltaX: -deltaX,
     deltaY: -deltaY
   });
   w.render();
+  return [deltaY, deltaX];
 }
 
-function keyUpHandler(event) {
-  // handle key releases
-  switch (event.keyCode) {
-    case 65: // A for moving left
-      //player.stopLeft();
-      player.isMovingLeft = false;
+function SubtractArrays(arr1, arr2, roundResult = false) {
+  let resultArray = [];
 
-      break;
-    case 68: // D for moving right
-      player.isMovingRight = false;
-      //player.stopRight();
-      break;
-    case 83: // S for crouching
+  for (let i = 0; i < arr1.length; i++) {
+    let value = arr1[i] - arr2[i];
+    if (roundResult) {
+      value = Math.round(value);
+    }
+    resultArray.push(value);
+  }
 
-      // player.isCrouching = false;
-      break;
-    default:
-      // do nothing
+  return resultArray;
+}
+
+function AddArrays(arr1, arr2, roundResult = false) {
+  // Create a new array to store the results
+  const resultArray = [];
+
+  // Loop through the arrays and add the elements at the same index
+  for (let i = 0; i < Math.min(arr1.length, arr2.length); i++) {
+    let value = (arr1[i] + arr2[i]);
+
+    if (roundResult) {
+      value = Math.round(value);
+    }
+    resultArray.push(value);
+  }
+
+  return resultArray;
+}
+
+function centerPlayer(coords, offset = [0, 0], lerpSpeed = 0.01) {
+  let x, y;
+  // If input is an array
+  if (Array.isArray(offset) && offset.length < 3) {
+    [x = 0, y = 0] = offset;
+  }
+  // If input is two separate arguments
+  else if (arguments.length < 4) {
+    [x = 0, y = 0] = arguments;
+  }
+  // Invalid input
+  else {
+    console.error('centerPlayer: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ' + offset);
+    return;
+  }
+  return ScrollWorld(LerpArray([0, 0], SubtractArrays(CellToPixelCoords(coords), [(owotWidth / 2) + x, (owotHeight / 2) + y]), lerpSpeed))
+}
+
+function CorrectLocation(...args) {
+  let location;
+  if (Array.isArray(args[0])) {
+    location = args[0];
+  } else {
+    location = args;
+  }
+  location[0] = Math.round(location[0]);
+  location[1] = Math.round(location[1]);
+  location[2] = Math.round(location[2]);
+  location[3] = Math.round(location[3]);
+
+  const outlocation = location.slice();
+
+  if (Math.round(location[2]) > 15) {
+    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) + 16) % 16)
+    outlocation[0] += Math.abs((Math.ceil(-(location[2]) / 16)))
+  }
+  if (Math.round(location[2]) < 0) {
+    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) - 1 + 16) % 16)
+    outlocation[0] -= Math.ceil(-(location[2]) / 16)
+  }
+  if (Math.round(location[3]) > 7) {
+    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) + 8) % 8)
+    outlocation[1] += Math.abs((Math.ceil(-(location[3]) / 8)))
+  }
+  if (Math.round(location[3]) < 0) {
+    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) - 1 + 8) % 8)
+    outlocation[1] -= Math.ceil(-(location[3]) / 8);
+  }
+  return outlocation;
+}
+
+function DoesCellContainChars(coord, specificChars) {
+  const [x, y, z, w] = CorrectLocation(coord);
+
+  const char = getChar(Math.round(x), Math.round(y), Math.round(z), Math.round(w));
+  if (specificChars === undefined || specificChars === null) {
+    return char !== " ";
+  }
+  return specificChars.includes(char);
+}
+
+function GetPlayer(id) {
+  // if name is null it will return the first player
+  for (const key in characterList) {
+    if (characterList[key] instanceof Player && (id === undefined || characterList[key].id === id)) {
+      return characterList[key];
+    }
+  }
+  return null;
+}
+
+function drawAnimatedGif(img, src, width, height, x, y) {
+  // Get the total number of frames in the GIF
+  var totalFrames = img.naturalWidth / width;
+
+  // Create a variable to keep track of the current frame
+  var currentFrame = 0;
+
+  // Define the function to draw each frame
+  function drawFrame() {
+    // Clear the canvas
+    owotCtx.clearRect(0, 0, owot.width, owot.height);
+
+    // Draw the current frame of the GIF onto the canvas
+    owotCtx.drawImage(img, currentFrame * width, 0, width, height, x, y, width, height);
+
+    // Increment the current frame, looping back to the start if necessary
+    currentFrame = (currentFrame + 1) % totalFrames;
+  }
+
+  // Set an interval to redraw the canvas every 100 milliseconds (adjust as needed)
+  setInterval(drawFrame, 100);
+
+  // Start loading the GIF image
+  img.src = src;
+}
+
+function canPlayerMove(frame, velocity) {
+
+  let v = Math.abs(velocity);
+  if (v > 6) {
+    return !((frame % Math.round(10 / (10 - v))) < ((10 - v) / 10))
+  } else {
+
+    return ((frame % Math.round(10 / v)) < (v / 10));
+
+  }
+
+
+
+
+
+
+
+
+}
+//--------------------------------------------END OF HELPER FUNCTIONS----------------------------------------------------------------------
+
+//--------------------------------------------START CREATE CLASSES ------------------------------------------------------------------------
+
+class Character {
+  constructor(x, y, z, w, id) {
+    this.frame = 0;
+
+    this.name = "character";
+    this.location = [x, y, z, w];
+    this.imgOffset = [0, 0];
+    this.imageCoords = CellToPixelCoords(this.location);
+    this.imageCoords_Old = this.imageCoords;
+    this.velocity = [0, 0];
+    this.lives = 1;
+    this.alive = true;
+    this.canFly = false;
+    this.isFacingLeft = false;
+    this.id = id;
+    this.moveUp = false;
+    this.moveLeft = false;
+    this.moveRight = false;
+		this.squat = false;
+    this.jumped = false;
+    this.jumpFrames = 3;
+    this.onPlatform = false;
+    this.isMain = false
+    this.img = new Image();
+    this.imagURL = "";
+    this.cellRep = " ";
+    this.blockers = null;
+    this.sprites = {};
+    characterList[id] = this;
+
+    // request animation frame and bind this to the tick function
+    this.tick = this.tick.bind(this);
+    requestAnimationFrame(this.tick);
+  }
+
+  onCreated() {
+    console.log(`Character ${this.id} created`);
+  }
+
+  onDie() {
+    console.log(`Character ${this.id} died`);
+    delete characterList[this.id];
+  }
+
+  onDamaged() {
+    this.lives--;
+    console.log(`Character ${this.id} damaged, lives left: ${this.lives}`);
+    if (this.lives <= 0) {
+      this.die();
+    }
+  }
+
+  die() {
+    this.alive = false;
+    this.onDie();
+  }
+  update() {
+    this.frame++
+    if (this.frame > 10) {
+      this.frame = 1;
+    }
+  }
+  setVelocity() {
+    // first break out the location and velocity of the character.
+    var [x, y, z, w] = this.location;
+    var [vX, vY] = this.velocity;
+    //try moving up
+    if (this.moveUp) {
+      this.moveUp = false;
+      //check the cell above for any blocking chars to see if you can move up.
+      let blocked = DoesCellContainChars([x, y, z, w - 1], this.blockers);
+      if (!blocked) {
+        //check if either you can jump, or if you can fly.
+
+        vY = -20;
+
+
+      }
+
+      //if there is a blocking char. you should be stopped. making you velocity y 0 but only if its positive because gravity should then take over.
+    }
+    //try moving left
+    if (this.moveLeft && !this.squat) {
+      this.isFacingLeft = true;
+      //check the cell to the left for any blocking chars to see if you can move left. 
+      let blocked = DoesCellContainChars([x, y, z - 1, w], this.blockers);
+      //add nagative velocity to the x.
+      if (!blocked) {
+        if (vX >= 0) {
+          vX = -1
+        }
+        vX -= 0.5
+      }
+      //if there is a blocking char. you should be stopped. making you velocity x 0
+    }
+    //try moving right
+    if (this.moveRight && !this.squat) {
+      //check the cell to the right for any blocking chars  to see if you can move right.
+      this.isFacingLeft = false;
+      let blocked = DoesCellContainChars([x, y, z + 1, w], this.blockers);
+      //add velocity to the x.
+      if (!blocked) {
+        if (vX == 0) {
+          vX += 1
+        }
+        vX += 0.5
+      }
+      //if there is a blocking char. you should be stopped. making you velocity x 0
+    }
+if (this.squat) {
+ this.imgSrc = this.sprites.big.squatting;
+}
+
+    let blocked = DoesCellContainChars([x, y, z, w + 1], this.blockers);
+    if (!blocked) {
+      if (vY > 5) {
+        this.imgSrc = this.sprites.big.falling;
+
+      } else {
+      //  this.imgSrc = this.sprites.big.standing;
+      }
+
+    }
+else{
+if(!this.squat){
+this.imgSrc = this.sprites.big.standing;
+}
+}
+
+    //set the min max of the velocity to 100
+    this.velocity[0] = Math.max(Math.min(vX, 10), -10);
+    this.velocity[1] = Math.max(Math.min(vY, 10), -10);
+
+  }
+
+
+  //do the actual movement based on velocity
+  move() {
+    let [x, y, z, w] = this.location;
+    //move right or left up or down
+    let a, b;
+    //check if the player can move left or right
+    if (canPlayerMove(this.frame, this.velocity[0])) {
+      a = Math.max(Math.min(this.velocity[0], 1), -1);
+    } else {
+      a = 0;
+    }
+
+    //check if should stop velocity x
+    //moving right
+
+    if (DoesCellContainChars([x, y, z + a, w], this.blockers)) {
+      a = 0;
+      this.velocity[0] = a;
+
+    }
+
+    //moving left
+
+
+
+    //check if the player can move up or down
+    if (canPlayerMove(this.frame, this.velocity[1])) {
+
+
+      b = Math.max(Math.min(this.velocity[1], 1), -1);
+      if (b < 0) {
+        this.velocity[1] = Math.max(this.velocity[1], -3);
+        this.imgSrc = this.sprites.big.jumping;
+      }
+    } else {
+      b = 0;
+    }
+
+    if (DoesCellContainChars([x, y, z + a, w + b], this.blockers)) {
+      a = 0;
+      b = 0;
+    }
+    let [x1, y1, z1, w1] = CorrectLocation(x, y, z, w);
+    writeCharTo(" ", "#000", x1, y1, z1, w1);
+
+
+
+    this.location = [x, y, z + a, w + b];
+
+  }
+  slowDown() {
+    let [x, y, z, w] = this.location;
+    let [vX, vY] = this.velocity;
+
+    vX = Lerp(vX, 0, 0.1);
+    this.velocity[0] = vX;
+    if (vY < -2) {
+      vY = Lerp(vY, 10, 0.01);
+    } else {
+      vY = Lerp(vY, 10, 0.5);
+    }
+
+    if (DoesCellContainChars([x, y, z, w + 1], this.blockers)) {
+      this.velocity[1] = 0;
+      this.jumped = false;
+    } else {
+      this.velocity[1] = vY;
+    }
+
+  }
+  draw() {
+
+    let [a, b, c, d] = CorrectLocation(this.location);
+
+    writeCharTo(this.cellRep, "#000", a, b, c, d)
+  }
+  renderPlayer() {
+    // Create a new canvas for mirroring the image
+    const mirroredCanvas = document.createElement('canvas');
+    this.img.src = this.imgSrc;
+    mirroredCanvas.width = this.img.width;
+    mirroredCanvas.height = this.img.height;
+
+    // Get the canvas context and mirror the image horizontally
+    const ctx = mirroredCanvas.getContext('2d');
+    ctx.translate(this.img.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(this.img, 0, 0, this.img.width, this.img.height);
+
+    // Draw the mirrored or original image on the main canvas depending on the player's direction
+    //const imgX = ((this.location[0] * tileW) + (this.location[2] * cellW) + positionX + Math.trunc(owotWidth / 2));
+    //const imgY = ((this.location[1] * tileH) + (this.location[3] * cellH) + positionY + Math.trunc(owotHeight / 2)) - 0;
+
+
+    this.imageCoords = LerpArray(CellToPixelCoords(this.location), this.imageCoords_old, 0.5);
+
+    owotCtx.drawImage(this.isFacingLeft ? mirroredCanvas : this.img, this.imageCoords[0], this.imageCoords[1], (tileW / 16), (tileH / 8));
+    this.imageCoords_old = this.imageCoords;
+
+    // move the screen to center the player location
+    if (this.isMain) {
+      this.imgOffset = centerPlayer(this.location);
+    }
+  }
+  tick() {
+    this.update();
+    this.setVelocity();
+    this.move();
+    this.slowDown();
+    this.draw();
+    this.renderPlayer()
+    requestAnimationFrame(this.tick); // request next animation frame
+  }
+
+}
+
+class Player extends Character {
+  constructor(x, y, z, w, name) {
+    super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+    this.name = name;
+    this.lives = 3;
+    this.id = name + "_" + (Object.keys(characterList).length - 1);
+    this.big = false;
+    this.isMain = true;
+    this.onCreated();
+    this.sprites = {
+      big: {
+        standing: "https://i.imgur.com/3AbgTGV.png",
+        walking: "https://i.imgur.com/FAlNx6v.gif",
+        running: "https://i.imgur.com/FAlNx6v.gif",
+        jumping: "https://i.imgur.com/Ds1wIuU.png",
+        burnt: "https://i.imgur.com/OHNBHp4.png",
+        falling: "https://i.imgur.com/6iwR8Wp.png",
+        squatting: "https://i.imgur.com/KJik4SF.png",
+        sliding: "https://i.imgur.com/XtiJZyA.png",
+      },
+      small: {
+        standing: "https://i.imgur.com/qZdpy4m.png",
+        walking: "https://i.imgur.com/A4TA5jg.gif",
+        running: "https://i.imgur.com/hhj15NQ.gif",
+        jumping: "https://i.imgur.com/54RtQTs.png",
+        dying: "https://i.imgur.com/1BvCcQI.png",
+        falling: "https://i.imgur.com/EkTsZC3.png",
+        squatting: "https://i.imgur.com/fytAWqC.png",
+        sliding: "https://i.imgur.com/SezxHNy.png"
+      }
+    }
   }
 }
+//--------------------------------------------END OF CREATE CLASSES ----------------------------------------------------------------------
 
-init();
-player = new Player(0, 0, 0, 0)
+//--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
+document.addEventListener("keydown", (event) => {
+  if (event.key === "w") {
+
+    if (GetPlayer().jumped == false) {
+
+      GetPlayer().moveUp = true;
+      GetPlayer().jumped = true;
+    }
+
+    // Handle the "W" key press
+  } else if (event.key === "a") {
+    GetPlayer().moveLeft = true;
+    // Handle the "A" key press
+  }
+  if (event.key === "s") {
+GetPlayer().squat = true;
+    // Handle the "S" key press
+  }
+  if (event.key === "d") {
+    GetPlayer().moveRight = true;
+    // Handle the "D" key press
+  }
+  if (event.key === " ") {
+    // Handle the spacebar press
+  }
+});
+
+document.addEventListener("keyup", (event) => {
+  if (event.key === "w") {
+    GetPlayer().moveUp = false;
+    // Handle the "W" key release
+  }
+  if (event.key === "a") {
+    GetPlayer().moveLeft = false;
+    // Handle the "A" key release
+  }
+  if (event.key === "s") {
+    // Handle the "S" key release
+GetPlayer().squat = false;
+  }
+  if (event.key === "d") {
+    GetPlayer().moveRight = false;
+    // Handle the "D" key release
+  }
+  if (event.key === " ") {
+    // Handle the spacebar release
+  }
+});
+
+
+//--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
+var player = new Player(0, 0, 0, 0, "luigi")
+player.imgSrc = "https://i.imgur.com/FAlNx6v.gif";
