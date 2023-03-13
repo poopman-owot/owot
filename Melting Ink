@@ -1,60 +1,105 @@
-document.addEventListener("keydown", function() {
-  console.log(cursorCoords);
-  var X = cursorCoords[0];
-  var Y = cursorCoords[1];
-  var x = cursorCoords[2];
-  var y = cursorCoords[3];
-  var requestId = null;
-
-  function animate() {
-    requestId = requestAnimationFrame(animate);
-    var Down_y = y + 1;
-    var Left_x = x - 1;
-    var Right_x = x + 1;
-    var Down_Y = Y;
-    var LeftRight_X = X;
-    //look down
-    if (Down_y > 7) {
-      Down_y = 0;
-      Down_Y++;
-    }
-    //if not empty
-    if (getChar(X, Down_Y, x, Down_y) !== " ") {
-      //look right
-      if (Left_x > 15) {
-        Left_x = 0;
-        LeftRight_X++;
-      }
-      //if not empty
-      if (getChar(LeftRight_X, Y, Left_x, y) !== " ") {
-        //look right
-        if (Right_x < 0) {
-          Right_x = 15;
-          LeftRight_X--;
-        }
-        if (getChar(LeftRight_X, Y, Right_x, y) !== " ") {
-          //you are stuck
-          cancelAnimationFrame(requestId);
-          return;
-        } else {
-          //draw right
-          X = LeftRight_X;
-          x = Right_x;
-          writeCharTo("█", "#000", X, Y, x, y)
-        }
-      } else {
-        //draw left
-        X = LeftRight_X;
-        x = Left_x;
-        writeCharTo("█", "#000", X, Y, x, y)
-      }
-    } else {
-      //draw down
-      Y = Down_Y;
-      y = Down_y;
-      writeCharTo("█", "#000", X, Y, x, y)
-    }
+var inkList = {};
+function CorrectLocation(...args) {
+  let location;
+  if (Array.isArray(args[0])) {
+    location = args[0];
+  } else {
+    location = args;
   }
-  
-  animate();
+  location[0] = Math.round(location[0]);
+  location[1] = Math.round(location[1]);
+  location[2] = Math.round(location[2]);
+  location[3] = Math.round(location[3]);
+
+  const outlocation = location.slice();
+
+  if (Math.round(location[2]) > 15) {
+    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) + 16) % 16)
+    outlocation[0] += Math.abs((Math.ceil(-(location[2]) / 16)))
+  }
+  if (Math.round(location[2]) < 0) {
+    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) - 1 + 16) % 16)
+    outlocation[0] -= Math.ceil(-(location[2]) / 16)
+  }
+  if (Math.round(location[3]) > 7) {
+    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) + 8) % 8)
+    outlocation[1] += Math.abs((Math.ceil(-(location[3]) / 8)))
+  }
+  if (Math.round(location[3]) < 0) {
+    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) - 1 + 8) % 8)
+    outlocation[1] -= Math.ceil(-(location[3]) / 8);
+  }
+  return outlocation;
+}
+
+function DoesCellContainChars(coord, specificChars) {
+  const [x, y, z, w] = CorrectLocation(coord);
+
+  const char = getChar(Math.round(x), Math.round(y), Math.round(z), Math.round(w));
+  if (specificChars === undefined || specificChars === null) {
+    return char !== " ";
+  }
+  return specificChars.includes(char);
+}
+
+function tickAllInk() {
+
+  for (const key in inkList) {
+    const o = inkList[key];
+      o.tick();
+  }
+
+	
+  requestAnimationFrame(() => tickAllInk());
+}
+class Ink {
+  constructor(x, y, z, w) {
+    this.location = [x, y, z, w];
+    this.tick = this.tick.bind(this);
+		this.onCreated();
+  }
+ onCreated() {
+    console.log(`New Ink Created`);
+		inkList[Object.keys(inkList).length] = this;
+  }
+move(){
+
+let [x,y,z,w] = this.location;
+
+//check if below is empty;
+if(!DoesCellContainChars([x,y,z,w+1])){
+this.location = [x,y,z,w+1];
+}
+// if it is not empty look to the left.
+else if(!DoesCellContainChars([x,y,z-1,w])){
+this.location = [x,y,z-1,w];
+}
+// if it is not empty look to the right.
+else if(!DoesCellContainChars([x,y,z+1,w])){
+this.location = [x,y,z+1,w];
+}
+
+// if it is not empty look above
+else {
+this.location = [x,y,z,w-1];
+}
+[x, y, z, w] = CorrectLocation(this.location);
+writeCharTo("█", "#000", x, y, z, w);
+
+
+}
+  tick() {
+
+    this.move();
+  }
+}
+
+
+document.addEventListener('click', function(event) {
+  if (event.ctrlKey) {
+  const [x, y, z, w] = cursorCoords;
+	ink = new Ink(x, y, z, w);
+  }
 });
+
+tickAllInk();
