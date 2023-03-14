@@ -1,0 +1,67 @@
+function getPixelColors(char) {
+  const canvas = owot;
+  const context = owotCtx
+  canvas.width = 4;
+  canvas.height = 8;
+  context.imageSmoothingEnabled = false;
+  context.fillStyle = 'white';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = 'black';
+  context.font = '8px monospace';
+  context.fillText(char, -1,6);
+  const pixelData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const pixelColors = [];
+  for (let i = 0; i < pixelData.length; i += 4) {
+    const r = pixelData[i];
+    const g = pixelData[i + 1];
+    const b = pixelData[i + 2];
+    // Threshold the RGB values to determine if the pixel should be black or white
+    const threshold = 220;
+    const isBlack = (r + g + b) / 3 <= threshold;
+    const color = isBlack ? [0, 0, 0] : [255, 255, 255];
+    pixelColors.push(color);
+  }
+  return pixelColors;
+}
+function renderPixelColors(pixelColors) {
+  const canvas = owot;
+  const context = owotCtx
+  canvas.width = 2;
+  canvas.height = 8;
+  context.imageSmoothingEnabled = false;
+
+  for (let i = 0; i < pixelColors.length; i += 2) {
+    const color1 = pixelColors[i];
+    const color2 = pixelColors[i + 1];
+    const x = Math.floor(i / 2) % canvas.width;
+    const y = Math.floor(Math.floor(i / 2) / canvas.width);
+    const avgColor = [
+      Math.round((color1[0] + color2[0]) / 2),
+      Math.round((color1[1] + color2[1]) / 2),
+      Math.round((color1[2] + color2[2]) / 2)
+    ];
+    context.fillStyle = `rgb(${avgColor[0]}, ${avgColor[1]}, ${avgColor[2]})`;
+    context.fillRect(x, y, 1, 1);
+      
+  }
+
+     const pixelData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  pixelColors = [];
+    var j = 0;
+  for (let i = 0; i < pixelData.length; i += 4) {
+    const r = pixelData[i];
+    const g = pixelData[i + 1];
+    const b = pixelData[i + 2];
+    // Threshold the RGB values to determine if the pixel should be black or white
+    const threshold = 220;
+    const isBlack = (r + g + b) / 3 <= threshold;
+    const color = isBlack ? [0, 0, 0] : [255, 255, 255];
+if (j == 0 ||j == 1 ||j == 4 ||j == 5 ||j == 8 ||j == 9 ||j == 12 ||j == 13 ) {
+
+    pixelColors.push(color);
+}
+     j++;  
+  }
+   
+  return pixelColors;
+}
