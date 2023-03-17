@@ -1,4 +1,5 @@
 owot.addEventListener("mousemove", showCursor);
+w.setFlushInterval(100)
 ee = "⇖";
 erase = " ";
 firstLetter = true;
