@@ -1,6 +1,6 @@
 owot.addEventListener("mousemove", showCursor);
 w.setFlushInterval(100)
-ee = "⇖";
+ee = "🮰";
 erase = " ";
 firstLetter = true;
 oldCoords = [0, 0, 0, 0];
