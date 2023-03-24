@@ -1,3 +1,4 @@
+alert("this is a chat filter");
 function filterChat(whitelist, blacklist) {
   const chatfield = document.getElementById('page_chatfield');
   const divs = chatfield.querySelectorAll('div');
