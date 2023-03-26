@@ -6,20 +6,21 @@ var globalTickItorator = 0;
 w.input.disabled = true
 cursorEnabled = false;
 const mirroredCanvas = document.createElement('canvas');
-const marioSpecChars = "ቶዱዳጀደጰ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደጰ";
+const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
   charImages.push(new Image)
 }
+
 const smSmall = "▫";
 const sm_halfY = "▫▣";
 const sm_halfX = "▫";
-const sm_backGround = "◠╭╮";
+const sm_backGround = "◠╭╮▫";
 const sm_destructable = "";
-
-const sm_jumpThrough = null
+const passthrough_erase = "▫";
+const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
 function CellToPixelCoords(cellCoords = [0, 0, 0, 0])
@@ -411,13 +412,23 @@ class Character {
       //if there is a blocking char. you should be stopped. making you velocity x 0
     }
     if (this.squat) {
+    if(this.isFacingLeft){
+    this.cellRep = ["ዸ"]
+    }
+    else{
       this.cellRep = ["ደ"]
+}
      }
     let [isBG,BGchar]= DoesCellContainChars([x, y, z, w + 1], sm_backGround);
     let blocked = DoesCellContainChars([x, y, z, w + 1], this.blockers)[0];
     if (!blocked || isBG) {
       if (vY > 0) {
+      if(this.isFacingLeft){
+this.cellRep = ["ጆ"];
+}
+else{
         this.cellRep = ["ጀ"];
+}
 
       } else {
         if (this.moveRight || this.moveLeft) {
@@ -438,7 +449,14 @@ class Character {
           //walking
         } else {
           //standing
-          this.cellRep = ["ቶ"];
+          
+          if(this.isFacingLeft){
+this.cellRep = ["ፃ"];
+}
+else{
+this.cellRep = ["ቶ"];
+}
+          
         }
       }
     }
@@ -484,7 +502,12 @@ this.velocity[0] = a;
       if (b < 0) {
         this.velocity[1] = Math.max(this.velocity[1], -2.5);
         //jumping
-        this.cellRep = ["ጰ"];       
+        if(this.isFacingLeft){
+this.cellRep = ["ጶ"];
+}
+else{
+        this.cellRep = ["ጰ"];  
+}     
       }
     } else {
       b = 0;
@@ -521,8 +544,13 @@ b = 0;
     
     writeCharTo(this.eraseChar, "#000", x1, y1, z1, w1);
     [x, y, z, w] = CorrectLocation(this.location);
- 
-    this.eraseChar = getChar(x, y, z, w);
+    if(DoesCellContainChars([x, y, z, w], passthrough_erase)[0]){
+this.eraseChar = " ";
+}
+else{
+this.eraseChar = getChar(x, y, z, w);
+}
+    
     writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
 
   }
@@ -666,7 +694,7 @@ tickAllObjects(blockList);
 
 setInterval(function() {
   globalTickItorator++;
-  //renderTiles(true);
+  renderTiles(true);
 }, 100)
 
 
@@ -708,7 +736,13 @@ const SMImageSrc = {
   mario_falling: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACDUlEQVRIicWVobLbMBBFjzIPlDWwzH4srOkfJF8Qhxkalln5gqaszA4rq6FZXFbofEFdZpiwwMCwLZCtWLZj8mbandFovdp7tXelKPC/TY0FA5B+rHiSOwgGINEiYvNhbgLfgc+wLdNRktkU+Bz9Ngu/kmkdLbhYRCIrLY2EqfEmsEPiSGh0ErjkkzZrdXcBRSeh63fIVDcoxSJ6Wrro2Jmf6u8TdACOP5AAkNWZU6ro2Mx3Qe4C0fbh9wkKUEcdI1XprkRbI/adcuYBgehY0msxujhmUpWShN7IMWZH66r0YJz6ZORkR1NhfRoQvqj0oJomITpGpQcrRy1XACShh87GK2qF2ZLaBtoqnpuC5iLJSpOEHkno0fZDqnLY2MaS0Ht8BCBJ6IncxY4k9ER0LFKVzkhCz+baRvbBXZIApN2gC+zmvEyJrJbmHTheLwCkkY/Ozk7ObJdfVBr5TjCNfF6rNen9D34wZ736yM/rjddqzfpbZnN2+UXZ69W9HKf8YsmWtXmVqsUnAG77H2zqPbv8ouxRAPjLRPxgboGrcAnAF9/MX88VAO/3AXq/RS1SAOU8KOfiNtUSytyQNGAA28Thz6yxdmeATb0frM8wxzSooswruyNAFo5fKishfpTFubg5clrwrtPc1lS/gkOtB0nnatd9DBy5tgK937LLL/3kwTfuv5P1xx/Mf2F/AcE7WqCCH7iFAAAAAElFTkSuQmCC"],
   mario_squatting: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABSUlEQVRIie2TLXaEMBSFPzgVld3BZFwk3QFLYBwyO4DsgB1AXd0gcbCE7KBIJOMqkXWpADL8TVXlfOdE5MG9777DA548efLkn/AePYjAbmvNwfu7wiysw3RnejHFzuhlK94KL6YYzT6hFhbv1YOxybp5BNaGqZ0SuGPD1DZSrWrL4y0NpnjYn/v4U8eH+AAiyA/FHN1b404en0aDWfwXNk2wrdnVPRHkVlUhAJl8JwLqRdfLNEKdJith8d2gq5vnvoKpWiJASeVEM3Wa4BUfh8H8WbxESYWSyu3C2QjsJsE8gb+8DdmVsivv8U3BkF0R0RtnIxBBTtZ9IYIcpj1YGSxNyq5kyK4AhHEwJqtCytjQt/p4E2faICeRBXQZAFreyOMTWmrXecbvW+31zeAKfTOM4gW2S9HVDdulsPnJnNu8TH2rj0JtcbpfhwCSTCqBdZsAAAAASUVORK5CYII="],
   mario_burnt: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABfklEQVRIid2UIZaDMBiEv/BWcAQkshJZ2SMgkSsrkRwhElm5EskRVlYikUiOgMuKkvRPIBS9815fE/LP/DMhAf4/SjDyP0RypljOwzUV6yjRjTXVpQWgDzhJSAoL9M/1JbIs8rGrV7Guq9gRFEBiybJz/5nsXGwcnCDuOwixLIv76Spz410HusoMQNPNjhxDmqb+W7DkSPHu2BM4Ilon7XfuxrrKjGzqRbAxdJVtxiGablZOALGRknwCykbYHOlY508wgM1ownnwHMC4zuJEHnZfozne5jKVwDPIb+frxnlxVewkDoUG4H5p3YaWRK4zQFff6eq7RwZ4jDVlNBAk1ypzRCtUDM1usb1oeaGd66+Y8rSK5Ksb62IQ5EOBEDLWNDTvt/DsZtr5/RWo2gdDoSlFd0m2sDGUHdjcvbDbC5GdeK+7UIIJ7NkObp7vrDuBvNBmvE1cfnMAxttE2j5cgVwfbxOAt654nXHPYnhcj2p2PyhnsAoaReQohw5iQn87pMdTVuCWCAAAAABJRU5ErkJggg=="],
-
+  mario_Standing_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAByUlEQVRIie1UIZakMBD97JsDtBzXjEOyN2BOsLRDRq4jnCQZt7IlDtqNpE8wkcjGIZG4WpFJOiRhpg8w9V4eRSX/51eqEuDHEj9QAuTH+si6KEEJUFdw/fMPwF/tnga5S/TLD1zmBXgXAIAb+8BlXtAVHF3Bo+pcxmDSppAxAMCf5wNOg4wqoUdGnzGiglNMyUMEhqTPmCUxZ2Al0Up68HrjP2y0EgEgUoP+rkTEayJeWxWkBvN/r4KojgYUGjsFITn3IF5TUEaMV5AagHOnpY9XnaN8u685d9a1uYvqSPy5DHZp2kkTAkjyYnMeiXxLDMFuDxjzgNYNqhAA1WAV+GAAeHLWJrE03Hzl3G/APgGadkpQ9TadazsBANhnK1/H6Uu1upQr2SGqo+06KvhuG0fBLokBU8E3bQxErvNXdpmXIGYJmnZKJEs3k5KleFGvG/B5PEPlwq7ZHAitRC6Jf4gu+KaaJCBIc0FpeUBR5Tamst93PxdIywNu/WIJNmWMWT5+AACGViGNzAc1NSpu/QLWFhZszN39WwUucM+iXZXmYvdyubvvKaA6k2jaCaI6BpONJ8pvJKKR6zdg5CH4s6yu+Sl8+y74mP8wRDB+Q8ST+QAAAABJRU5ErkJggg=="],
+  mario_walking_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAByUlEQVRIie1UIZakMBD97JsDtBzXjEOyN2BOsLRDRq4jnCQZt7IlDtqNpE8wkcjGIZG4WpFJOiRhpg8w9V4eRSX/51eqEuDHEj9QAuTH+si6KEEJUFdw/fMPwF/tnga5S/TLD1zmBXgXAIAb+8BlXtAVHF3Bo+pcxmDSppAxAMCf5wNOg4wqoUdGnzGiglNMyUMEhqTPmCUxZ2Al0Up68HrjP2y0EgEgUoP+rkTEayJeWxWkBvN/r4KojgYUGjsFITn3IF5TUEaMV5AagHOnpY9XnaN8u685d9a1uYvqSPy5DHZp2kkTAkjyYnMeiXxLDMFuDxjzgNYNqhAA1WAV+GAAeHLWJrE03Hzl3G/APgGadkpQ9TadazsBANhnK1/H6Uu1upQr2SGqo+06KvhuG0fBLokBU8E3bQxErvNXdpmXIGYJmnZKJEs3k5KleFGvG/B5PEPlwq7ZHAitRC6Jf4gu+KaaJCBIc0FpeUBR5Tamst93PxdIywNu/WIJNmWMWT5+AACGViGNzAc1NSpu/QLWFhZszN39WwUucM+iXZXmYvdyubvvKaA6k2jaCaI6BpONJ8pvJKKR6zdg5CH4s6yu+Sl8+y74mP8wRDB+Q8ST+QAAAABJRU5ErkJggg==","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB+klEQVRIie2VIZbbMBCGP+9b3sAwp8zQN6hvsAkzW8OyKCeoewI7bGFgWBxWVucE8TKzJiwwZWFToEqWbWWbA3Te07M0mvnnH83MM/yXYKiYgwx1lcfOCzAH2SVKH96Ar3q7qMu7QE9Dxf5yhR8FAKfsyP5yZZcodonysnMRR5c2hSgD4GU6YVGXXibyyKqiTCRR4mPyEIABqaLMgpg3sJTkJnqpZW//sMhNBBBpav29iYhaiqilZSFNbc5dFYo0NE5jyRYjVXmpELWUURlpD0hTw2anqbcHnWO57mw2O7u1uRdpKGo6H0VZbc8aEAjipPceQbkODMDdHjAycLTbURVGjk1tGQydAZ4d28CbipNveal6tncjF2koAIftGYDsbytv2g3QHyrvODdxQXl7B+BX/NPeqYsupzsPvSoA7KMctT3wMp1QTjV9tTnpFLKZF0Q30U0kb492YIxuuIo09M4CZTbj2yymTL/w/e3V9zQfyywuLIu8Pdpow+hz6I1z4ALM5hOSNO4Bf8q7ku6jHIBTdeXUrEZ94JXfua59vW1GztC9waiV621jnczXZWv2z4AUaYjKz3xOoaaLBOMzwDIqWTUIEAQmepGG1mDdKk7NKnAjuc4AK92lHYCRIg3tpaMWN4AL8DQwNBeuiLTK6zyMgsPmX/8Le/8H+NpUAblrNdoAAAAASUVORK5CYII="],
+  mario_walking2_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACFElEQVRIie2UrZLbMBSFP+/sAwQuc8ICU7ZsvU+wCTM0LIvyBllWZoUtNDSLw8rqPEFcZpaYGaYs7BYo0vovbWZKe2Y0lmTd43PuvRb8h9fdmIN097KBc4MEc5BtoMziA/hqpotc3yR66G7s6jN8jwE4RQd29ZltoNgGalBdk7H30lmYRgC8PY1Y5HpQidwzsmkkEigZUnIXgSXJppEjsTlwkuQiZqhla3435CICiBS5eV5ERC1F1NKpkCK3688qxKFvg/qIFr0tXWeIWkqvjJR7pMgh2Rrp5d541JvPM8nWTZ33OPRFPc17X1mllSEEvFnQyoenN54luNkDFp1AN+1VoRdY5E5BNxjg0cpvBrWsNPzqOgPg+lYy8Lw49EUlJ3Q0xj4t9mkFQHRt5S6SMjEKAJokk2fNcVShApicfRRwHFWt4F19xllo4vVbgr78ZFeDDl8YAyrds6vhOPvhzk3q189E2Bz8WmcU0y8AzMoDgFu/hL5TCqCjsbMIwHgWi1xE1uVB1uXBtPB1HYe+WzdHHPrSqIJm8gxRGgwm7BYeuDaRWi9YTjVJaGr+fip4PxVYa83qWAurtPI8SxBfPQJsStVSkqeG6K1cu72V8e/1qtANamJTmgt3OdXEoc8qreQRUwlZpVVLxSk7/81+C+6y6LY1mAqNZ7HEoW8qUip7ToZu5Zs/Fp18rdLqD0fvU/zv+A2SB0rRRqwEzQAAAABJRU5ErkJggg=="],
+  mario_jumping_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACJ0lEQVRIiaWVrZLiQBSFv1AjkMhxZF3cZp9g8gYDLjLr1tG8QeQ6GjduInEEt47wBGRcHOCQsw53V3QSOiGh2N1T1dU/1ef0ubf/HEoswrFU7fnq5PA3WIRjkYvUxRZ7mPyvIk/tgenw6n4CApBCb0i1gEqOTIcO60CZgTfgRyma6V6hJ5Mwt7a7OX/ymr/Dcc4x2vPx80stOs20dLoprfaW1Isk9SKRQEkVVht3BWyhPpGHBGw3lcigDOGqdBFT1KzRvosJiATKlIsIIJJnpr6IiJqJqFntQvKs6hsHAPp5DXrSvUI0vRnS5xRRMxlAa3+LHZJnkKyN9WIHgKOXV3ayrps1cRGORT1fHehzynx1MnnJMzPZDxr5cPTSsQ/F3bNfERtOwBnYnU5intUOWnBuSKkXycHfYodiY/PrN0mRXOeDc3Mbl4UCNAC7MgeRFwFw8Le8+GMA1HnKNNPSEFDDr7iTESoz27YsJ3P54OBvzZzkCICO3Gbcrr8QdzJCrcy26fDFEFY7Dv62JtrQkXv7oFQxBqHJehJ/r23fRfWUxcVe4mIv7X7fk3fjoA8bL4Yybri+3FUOBCCI3wlCv1MgW+UAHNNPU+dzB8xlEgApFK9FTOx9IwmzTnIX6pPoeGbvF2EzYTa5Wt123ZuDyoU7GbWJzDwN3pj56iT2XahvH5gYj/nc6SRbaCSxY7wNsUO0F6xEHvnORApVnYPH/9C2yP+QG/gDXedzU12dIL4AAAAASUVORK5CYII="],
+  mario_falling_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACG0lEQVRIicWVrZabUBSFv5s1ojJyXBiHa/oEkzzBJA5JXV0ublwZNw7iKqnDhbhK5glKXSQ4ZMbFnQoIXP7StVrRsxaLC5y97z4/9wD/29TUhw1I/10y4n83BT6sNHwDvlTvjuUZTpH0SWaT2n4EAOTuTwCe7ue4tjuqzDSZujYgstKS2K5MkUyCb5FMhwBseusE2KZhx8ckUH1Q0lub327lQ0TvxLyPhfLHXJjgPpFJMGgMuUjFenoD+7F6+ayrGMN943cNZzSJ6oPq3HG33U2ylIPekYBqCAJnIZKlN5vEtLBMEL2ToYLTG5KlEB0QvatC6cknOrRqTQX6vi1UWCZ4cdFIBlDLVUV6BYd7ZSbxdo/XwI6SXg7GgVnaKAjLhMBZEDgLZKXZgNw18qMcsADQz9+7LNGBsEyofOoQXauNXS4ichG5rgNnIYGzkE3dNKaPeQXOQjoDRUc5oWuhy6ru+2UV1iPdA2TazIsLdZWzfo14yNYcyzPr1UeszZzw8ouHbN1KNkLw4kJ1yni0feb+ZwCWp2oSZfanBvRoJNqLCwXtTBTtb8H3ea+BX60lAC/1cxpnHGvnPDkDXhUCdf2VHTaOt6wCtzaYyk8nn3cSXvLbRPXGavQ0Rk7arNM4a1SZu9eNNzxM1/43SfLk3AHv7LasiuEZaCpjLYPB+TDBXlwwo/un6UyoPPMGz15coP3ugPkbu87Hf7ff8I04b+vM2fIAAAAASUVORK5CYII="],
+  mario_squatting_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABVElEQVRIie2SIZKDQBBF36QiIiPXZeIiOQJHGBxuWbcuww24AdkTBIkLewNuECSSuJXIuF5BwmaARK2kq7pqpun+8/vzYY455pjjn0JNFQ3IsFY86XWK98GTb0eNQXmYBHq8CIBcBZoYPruhIVhQHkYgMpXFLhLxrVMzIOJbeVxRMbGvg379+6xWCnM731ks0nCDVGWfz4bv9+J21l4qAIvRi1WJ2P0rUj0IwDLOLwrexb4Zp8kAwUpxemARrDrtkvoMQBZ2LCZFFLsXcxPunsUuEgPiJ0dJ6rNoL5UlE0KK3bMtNR6dJ75/2tEaZV7xqIHSXkpSn9FeyrbUaLOmTY69gQCyOqNNjg6QYwjtpRLlPllYEuV+/8o6+QAYDTdFO+lvScMNcX4hDTd98au2aLMeAQx/o0htifMLUrsW3u8ONEXrDDdVrIYMXrrytmYHUMUK4BdXBKkGLeZ/KAAAAABJRU5ErkJggg=="],
+  mario_burnt_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABfklEQVRIid2UIZaDMBiEv/BWcAQkshJZ2SMgkSsrkRwhElm5EskRVlYikUiOgMuKkvRPIBS9815fE/LP/DMhAf4/SjDyP0RypljOwzUV6yjRjTXVpQWgDzhJSAoL9M/1JbIs8rGrV7Guq9gRFEBiybJz/5nsXGwcnCDuOwixLIv76Spz410HusoMQNPNjhxDmqb+W7DkSPHu2BM4Ilon7XfuxrrKjGzqRbAxdJVtxiGablZOALGRknwCykbYHOlY508wgM1ownnwHMC4zuJEHnZfozne5jKVwDPIb+frxnlxVewkDoUG4H5p3YaWRK4zQFff6eq7RwZ4jDVlNBAk1ypzRCtUDM1usb1oeaGd66+Y8rSK5Ksb62IQ5EOBEDLWNDTvt/DsZtr5/RWo2gdDoSlFd0m2sDGUHdjcvbDbC5GdeK+7UIIJ7NkObp7vrDuBvNBmvE1cfnMAxttE2j5cgVwfbxOAt654nXHPYnhcj2p2PyhnsAoaReQohw5iQn87pMdTVuCWCAAAAABJRU5ErkJggg=="],
 }
 
 
