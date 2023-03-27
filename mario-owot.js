@@ -5,6 +5,7 @@ const blockers = "";
 var globalTickItorator = 0;
 w.input.disabled = true
 cursorEnabled = false;
+w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥ";
 const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁";
@@ -842,11 +843,10 @@ tickAllObjects(characterList);
 
 setInterval(function() {
   globalTickItorator++;
+},100)
+setInterval(function() {
   renderTiles(true);
-}, 100)
-
-
-
+},1000)
 
 //----------------------------------------------------------CellVisual Library
 
