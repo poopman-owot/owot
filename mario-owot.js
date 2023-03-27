@@ -700,8 +700,8 @@ class Character {
     if (this.alive) {
 
       let [a, b, c, d] = CorrectLocation(this.location);
-      writeBuffer.push([b, a, d, c, getDate(), CycleImage(this.cellRep, globalTickItorator), globalTickItorator])
-      network.write(writeBuffer.splice(0, 512))
+     // writeBuffer.push([b, a, d, c, getDate(), CycleImage(this.cellRep, globalTickItorator), globalTickItorator])
+     // network.write(writeBuffer.splice(0, 512))
     }
   }
   tick() {
