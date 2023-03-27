@@ -7,7 +7,7 @@ w.input.disabled = true
 cursorEnabled = false;
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
@@ -19,7 +19,7 @@ const sm_halfY = "▫▣";
 const sm_halfX = "▫";
 const sm_backGround = "◠╭╮▫";
 const sm_destructable = "";
-const passthrough_erase = "▫";
+const passthrough_erase = "▫⡀⠂⠁";
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
@@ -298,8 +298,8 @@ function tickAllObjects(List) {
 
   }
 
-  player.tick();
-
+  //player.tick();
+  
   requestAnimationFrame(() => tickAllObjects(List));
 }
 //--------------------------------------------END OF HELPER FUNCTIONS----------------------------------------------------------------------
@@ -328,7 +328,8 @@ class Character {
     this.jumped = false;
     this.jumpFrames = 3;
     this.onPlatform = false;
-    this.isMain = false
+    this.isMain = false;
+    this.isProjectile = false;
     this.imagURL = "";
     this.cellRep = ["🯅"];
     this.blockers = blockers;
@@ -343,17 +344,38 @@ class Character {
   }
 
   onCreated() {
-    console.log(`Character ${this.id} created`);
+    console.log(`${this.id} created`);
   }
 
   onDie() {
-    console.log(`Character ${this.id} died`);
+    console.log(`${this.id} died`);
+    let [x, y, z, w] = CorrectLocation(this.location);
+    writeCharTo(" ", "#000", x,y,z,w);
+    if(this.isProjectile){
+    
+if(this.isFacingLeft){
+let [a,b,c,d] = CorrectLocation([x,y,z-1,w]);
+
+//sm_jumpThrough sm_backGround
+if(!DoesCellContainChars([a,b,c,d],superMarioChars)[0] && !DoesCellContainChars([a,b,c,d],sm_backGround)[0]){
+writeCharTo(" ", "#000", a,b,c,d);
+writeCharTo(" ", "#000", x,y,z,w);
+}
+}
+else{
+let [a,b,c,d] = CorrectLocation([x,y,z+1,w]);
+if(!DoesCellContainChars([a,b,c,d],superMarioChars)[0] && !DoesCellContainChars([a,b,c,d],sm_backGround)[0]){
+writeCharTo(" ", "#000", a,b,c,d);
+writeCharTo(" ", "#000", x,y,z,w);
+}
+}
+}
     delete characterList[this.id];
   }
 
   onDamaged() {
     this.lives--;
-    console.log(`Character ${this.id} damaged, lives left: ${this.lives}`);
+    console.log(`${this.id} damaged, lives left: ${this.lives}`);
     if (this.lives <= 0) {
       this.die();
     }
@@ -373,6 +395,7 @@ class Character {
     // first break out the location and velocity of the character.
     var [x, y, z, w] = this.location;
     var [vX, vY] = this.velocity;
+
     //try moving up
     if (this.moveUp) {
       this.moveUp = false;
@@ -421,6 +444,7 @@ class Character {
      }
     let [isBG,BGchar]= DoesCellContainChars([x, y, z, w + 1], sm_backGround);
     let blocked = DoesCellContainChars([x, y, z, w + 1], this.blockers)[0];
+    
     if (!blocked || isBG) {
       if (vY > 0) {
       if(this.isFacingLeft){
@@ -464,7 +488,16 @@ this.cellRep = ["ቶ"];
     //set the min max of the velocity to 100
     this.velocity[0] = Math.max(Math.min(vX, 10), -10);
     this.velocity[1] = Math.max(Math.min(vY, 10), -10);
+if(this.isProjectile){
+this.cellRep = ["⡀","⠂","⠁","⠂"];
+if(this.isFacingLeft){
+this.velocity[0] = -1
 
+}
+else{
+this.velocity[0] = 1
+}
+}
   }
 
 
@@ -486,13 +519,13 @@ this.cellRep = ["ቶ"];
     let [isBG,BGchar]= DoesCellContainChars([x, y, z + a, w + b], sm_backGround);
     if (DoesCellContainChars([x, y, z + a, w], this.blockers)[0] && !isBG) {
       a = 0;
-      
+
 
     }
 this.velocity[0] = a;
     //moving left
 
-
+  
 
     //check if the player can move up or down
     if (canPlayerMove(this.frame, this.velocity[1])) {
@@ -541,18 +574,40 @@ b = 0;
     this.location = [x, y, z + a, w + b];
   
 
-    
+   if(this.alive){ 
     writeCharTo(this.eraseChar, "#000", x1, y1, z1, w1);
+    }
     [x, y, z, w] = CorrectLocation(this.location);
     if(DoesCellContainChars([x, y, z, w], passthrough_erase)[0]){
 this.eraseChar = " ";
 }
 else{
 this.eraseChar = getChar(x, y, z, w);
-}
-    
-    writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
 
+
+}
+if(this.isProjectile){
+if(this.isFacingLeft){
+let [isbg,Char] = DoesCellContainChars([x, y, z-1, w], sm_backGround);
+if(!isbg && Char != " "){
+this.onDamaged();
+}
+}
+else{
+let [isbg,Char] = DoesCellContainChars([x, y, z+1, w], sm_backGround);
+if(!isbg && Char != " "){
+this.onDamaged();
+
+}
+}
+
+
+this.cellRep = ["⡀","⠂","⠁","⠂"];}   
+
+ 
+if(this.alive){
+    writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
+}
   }
   slowDown() {
     let [x, y, z, w] = this.location;
@@ -575,14 +630,15 @@ this.eraseChar = getChar(x, y, z, w);
 
   }
   draw() {
+  if(this.alive){
 
     let [a, b, c, d] = CorrectLocation(this.location);
     writeBuffer.push([b, a, d, c, getDate(), CycleImage(this.cellRep, globalTickItorator), globalTickItorator])
     network.write(writeBuffer.splice(0, 512))
-
+}
   }
   tick() {
-
+if(this.alive){
     // Slow down the animation by dividing the time delta by 2
 
     // Save the current timestamp for the next frame
@@ -594,8 +650,10 @@ this.eraseChar = getChar(x, y, z, w);
       this.slowDown();
       this.draw();
       this.frameSlowdown = 0
+
     }
     // requestAnimationFrame(this.tick); // request next animation frame
+}
   }
 
 }
@@ -612,7 +670,17 @@ class Player extends Character {
   }
 }
 
-
+class Fireball extends Character {
+  constructor(x, y, z, w) {
+    super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+    this.name = "fireball";
+    this.lives = 2;
+    this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+    this.isMain = false;
+    this.onCreated();
+    this.isProjectile = true;
+  }
+}
 //--------------------------------------------END OF CREATE CLASSES ----------------------------------------------------------------------
 
 //--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
@@ -640,6 +708,17 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === " ") {
     // Handle the spacebar press
+    let moveLeft = GetPlayer().isFacingLeft;
+		let [a,b,c,d] = GetPlayer().location;
+		if(moveLeft){
+c-=1;
+
+		}
+else{
+c +=1
+}
+    let fireBall = new Fireball(a,b,c,d)
+fireBall.isFacingLeft = moveLeft;
   }
 });
 
@@ -690,7 +769,7 @@ function makePlayer() {
 }
 player = new Player(0, 0, 0, 0, "luigi")
 
-tickAllObjects(blockList);
+tickAllObjects(characterList);
 
 setInterval(function() {
   globalTickItorator++;
@@ -743,6 +822,11 @@ const SMImageSrc = {
   mario_falling_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACG0lEQVRIicWVrZabUBSFv5s1ojJyXBiHa/oEkzzBJA5JXV0ublwZNw7iKqnDhbhK5glKXSQ4ZMbFnQoIXP7StVrRsxaLC5y97z4/9wD/29TUhw1I/10y4n83BT6sNHwDvlTvjuUZTpH0SWaT2n4EAOTuTwCe7ue4tjuqzDSZujYgstKS2K5MkUyCb5FMhwBseusE2KZhx8ckUH1Q0lub327lQ0TvxLyPhfLHXJjgPpFJMGgMuUjFenoD+7F6+ayrGMN943cNZzSJ6oPq3HG33U2ylIPekYBqCAJnIZKlN5vEtLBMEL2ToYLTG5KlEB0QvatC6cknOrRqTQX6vi1UWCZ4cdFIBlDLVUV6BYd7ZSbxdo/XwI6SXg7GgVnaKAjLhMBZEDgLZKXZgNw18qMcsADQz9+7LNGBsEyofOoQXauNXS4ichG5rgNnIYGzkE3dNKaPeQXOQjoDRUc5oWuhy6ru+2UV1iPdA2TazIsLdZWzfo14yNYcyzPr1UeszZzw8ouHbN1KNkLw4kJ1yni0feb+ZwCWp2oSZfanBvRoJNqLCwXtTBTtb8H3ea+BX60lAC/1cxpnHGvnPDkDXhUCdf2VHTaOt6wCtzaYyk8nn3cSXvLbRPXGavQ0Rk7arNM4a1SZu9eNNzxM1/43SfLk3AHv7LasiuEZaCpjLYPB+TDBXlwwo/un6UyoPPMGz15coP3ugPkbu87Hf7ff8I04b+vM2fIAAAAASUVORK5CYII="],
   mario_squatting_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABVElEQVRIie2SIZKDQBBF36QiIiPXZeIiOQJHGBxuWbcuww24AdkTBIkLewNuECSSuJXIuF5BwmaARK2kq7pqpun+8/vzYY455pjjn0JNFQ3IsFY86XWK98GTb0eNQXmYBHq8CIBcBZoYPruhIVhQHkYgMpXFLhLxrVMzIOJbeVxRMbGvg379+6xWCnM731ks0nCDVGWfz4bv9+J21l4qAIvRi1WJ2P0rUj0IwDLOLwrexb4Zp8kAwUpxemARrDrtkvoMQBZ2LCZFFLsXcxPunsUuEgPiJ0dJ6rNoL5UlE0KK3bMtNR6dJ75/2tEaZV7xqIHSXkpSn9FeyrbUaLOmTY69gQCyOqNNjg6QYwjtpRLlPllYEuV+/8o6+QAYDTdFO+lvScMNcX4hDTd98au2aLMeAQx/o0htifMLUrsW3u8ONEXrDDdVrIYMXrrytmYHUMUK4BdXBKkGLeZ/KAAAAABJRU5ErkJggg=="],
   mario_burnt_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAABfklEQVRIid2UIZaDMBiEv/BWcAQkshJZ2SMgkSsrkRwhElm5EskRVlYikUiOgMuKkvRPIBS9815fE/LP/DMhAf4/SjDyP0RypljOwzUV6yjRjTXVpQWgDzhJSAoL9M/1JbIs8rGrV7Guq9gRFEBiybJz/5nsXGwcnCDuOwixLIv76Spz410HusoMQNPNjhxDmqb+W7DkSPHu2BM4Ilon7XfuxrrKjGzqRbAxdJVtxiGablZOALGRknwCykbYHOlY508wgM1ownnwHMC4zuJEHnZfozne5jKVwDPIb+frxnlxVewkDoUG4H5p3YaWRK4zQFff6eq7RwZ4jDVlNBAk1ypzRCtUDM1usb1oeaGd66+Y8rSK5Ksb62IQ5EOBEDLWNDTvt/DsZtr5/RWo2gdDoSlFd0m2sDGUHdjcvbDbC5GdeK+7UIIJ7NkObp7vrDuBvNBmvE1cfnMAxttE2j5cgVwfbxOAt654nXHPYnhcj2p2PyhnsAoaReQohw5iQn87pMdTVuCWCAAAAABJRU5ErkJggg=="],
+  
+   fireball1: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFFSURBVEhL7dHLSsNAGAXgk0xCjL0YWpAQUBTElSJekIKLIm58gHbhU3TtE4gLFz6BG3f2FVwqFUHcuChUsGqjRAzYW6YxM2PRIRXyCvkW88Nw5sDPIJVKpVKpfxQ5Y6IK4nvaNpvW68zQHM4Z+IC6RRgV8zJojB8IGf2lyhkLnuCIMDoxZ3K2vb4Cp1wCsQu2HwanQdksyVgsUWDmrMVi3lrIFi0VtgXsbsDe21Izc7ObikHqMhZLFIDSc4zC0ZfrdR6vbyO021CWl2CtraohjxyZiiULOH8HZbWM1z/Iul0PLQ9ovQF9iogxGZpIFggcj899TSi9/AjPg/sm8PqJ8KHJNS7cv9BEooATVKHyMyjE1zRSUz/6jeHV3Qvzuzc69IqMxZLfuDM1T8X4nvAj6OrhsEd5IZM3gu9uaDroKBf4twfwA3zZdBAfdXNkAAAAAElFTkSuQmCC"],
+   fireball2: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAE+SURBVEhL7dG/SsNAAMfxX+6SS3L2D0pprX+igqjVQW0XoW+gj+Dq4IP4EA66CI6OLoJjEaRx1UGoKJQKKtKYpkm81FKOc8gr5LMcHF9+wx0ymcyEJk9l1IDhcXoQceNUMFpJkgS2FwVMo4f4jVzewqtMJ4g8FU/DfhiIi2meq1hCQ3l3C8Nq0fREdGJBP5eZkhoYUpzl5wp5UluBXrAgXnooN2qkaE/VYt2oy0xJDZg5o2TWt4ENB3xnDV7/G6jOgm2uajSMZ2SmpAZ0SgE2vl5fHI/MY1Dm+Ly6AZ46gBjJ6l9qgCT46rbuRsF9G1hysNDcQ2nZGT+3hoDhQ2ZKasAIxIP5Ez+G7nOCWxfo9OC/dRH6vscIPZKZkvrGQdNyoMeNoa1fkjy3CSEQff+dB8kx86JrzUUs00wmowB/PQBemw4IvJ0AAAAASUVORK5CYII="],
+   fireball3: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAE+SURBVEhL7dE9SgNBGMbxZyab7GzMh8UmaggookEWothoQC8gWNl4AQuxF7yBhb0nsBbxABZiIUgIJqTUCEIKUTFRs9mPmTHIsIHMFfbXTPPnnXkZggnutrlIBb8ccF7N0RQlySTEcABhmefcc8+se7yo9B9VZ4RLfvCdEFWWTVOy6QCMgtp59F33kBrGlcoi2gCPyJOwNE3N3Q3ILQdfOQPEmYecy9LfPFtVWUR/gZ0mdmUZXv0J7xfX+JgabVkpwV5z4CWJtrI2QEqg/9BCyD0Ua1Us7e8A6ytA2kQQBqoa0wYYw0BkmIXMbBEol4HCDHizjdfGI+jAV9WYNsDq+S3/sy/8ThfovAG3bfzcNJDq9kRBslOVRfRvrGFBGoljwthRmJAgZHRHEEprKJo+IXvWnfes0lgsFovFJgB/62BnG00q2BwAAAAASUVORK5CYII="],
+   
 }
 
 
