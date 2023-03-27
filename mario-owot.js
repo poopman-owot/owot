@@ -343,12 +343,12 @@ class Character {
     this.canTick = true;
     this.canTakeDamage = true;
     characterList[id] = this;
-		
+
     // request animation frame and bind this to the tick function
     this.tick = this.tick.bind(this);
     //requestAnimationFrame(this.tick);
   }
-  
+
   onCreated() {
     console.log(`${this.id} created`);
   }
@@ -364,34 +364,31 @@ class Character {
 
         //sm_jumpThrough sm_backGround
         if (!DoesCellContainChars([a, b, c, d], sm_backGround)[0]) {
-        let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
-if(isenemy){
-writeCharTo("⡀", "#000", a, b, c, d);
-}
-else{
-writeCharTo(" ", "#000", a, b, c, d);
-}
+          let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
+          if (isenemy) {
+            writeCharTo("⡀", "#000", a, b, c, d);
+          } else {
+            writeCharTo(" ", "#000", a, b, c, d);
+          }
           writeCharTo(" ", "#000", a, b, c, d);
           writeCharTo(" ", "#000", x, y, z, w);
         }
       } else {
         let [a, b, c, d] = CorrectLocation([x, y, z + 1, w]);
         if (!DoesCellContainChars([a, b, c, d], sm_backGround)[0]) {
-let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
-if(isenemy){
-writeCharTo("⡀", "#000", a, b, c, d);
-}
-else{
-writeCharTo(" ", "#000", a, b, c, d);
-}
+          let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
+          if (isenemy) {
+            writeCharTo("⡀", "#000", a, b, c, d);
+          } else {
+            writeCharTo(" ", "#000", a, b, c, d);
+          }
           writeCharTo(" ", "#000", x, y, z, w);
         }
       }
+    } else {
+      confirm("you died")
+      location.reload()
     }
-else{
-confirm("you died")
-location.reload()
-}
     delete characterList[this.id];
   }
 
@@ -403,29 +400,29 @@ location.reload()
     }
   }
   onFire() {
-if(this.canTakeDamage){
-this.onDamaged();
+    if (this.canTakeDamage) {
+      this.onDamaged();
 
-    //ዤዥ
-    if (this.isFacingLeft) {
-      this.cellRep = ["ዥ"]
-    } else {
-      this.cellRep = ["ዤ"]
-    }
-    this.canTick = false;
-    this.canTakeDamage = false;
-    const _this = this;
-    setTimeout(function() {
+      //ዤዥ
+      if (this.isFacingLeft) {
+        this.cellRep = ["ዥ"]
+      } else {
+        this.cellRep = ["ዤ"]
+      }
+      this.canTick = false;
+      this.canTakeDamage = false;
+      const _this = this;
+      setTimeout(function() {
 
-      _this.canTick = true;
-      _this.canTakeDamage = false;
+        _this.canTick = true;
+        _this.canTakeDamage = false;
 
         setTimeout(function() {
-        _this.canTakeDamage = true;
+          _this.canTakeDamage = true;
 
+        }, 2000)
       }, 2000)
-    }, 2000)
-}
+    }
   }
   die() {
     this.alive = false;
@@ -548,18 +545,18 @@ this.onDamaged();
   //do the actual movement based on velocity
   move() {
     let [x, y, z, w] = this.location;
-if( DoesCellContainChars([x, y, z+1 , w], sm_hurts_fire)[0]){
-if(!this.isProjectile && this.canTakeDamage){
+    if (DoesCellContainChars([x, y, z + 1, w], sm_hurts_fire)[0]) {
+      if (!this.isProjectile && this.canTakeDamage) {
 
-this.onFire();
-}
-}
-if( DoesCellContainChars([x, y, z-1 , w], sm_hurts_fire)[0]){
-if(!this.isProjectile && this.canTakeDamage){
+        this.onFire();
+      }
+    }
+    if (DoesCellContainChars([x, y, z - 1, w], sm_hurts_fire)[0]) {
+      if (!this.isProjectile && this.canTakeDamage) {
 
-this.onFire();
-}
-}
+        this.onFire();
+      }
+    }
 
     //move right or left up or down
     let a = 0,
@@ -666,12 +663,11 @@ this.onFire();
 
 
     if (this.alive) {
-    if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts_fire)[0]){
-this.onFire();
-}
-else if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts)[0]){
-this.onDamaged();
-}
+      if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts_fire)[0]) {
+        this.onFire();
+      } else if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts)[0]) {
+        this.onDamaged();
+      }
 
 
       writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
@@ -752,6 +748,18 @@ class Fireball extends Character {
     this.isProjectile = true;
   }
 }
+
+var hitTimeout = setTimeout(AllowHits, 1000);
+function tempInvincible(){
+GetPlayer().canTakeDamage = false;
+clearTimeout(hitTimeout);
+hitTimeout = setTimeout(AllowHits, 1000);
+}
+function AllowHits (){
+GetPlayer().canTakeDamage = true;
+clearTimeout(hitTimeout);
+}
+
 //--------------------------------------------END OF CREATE CLASSES ----------------------------------------------------------------------
 
 //--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
@@ -787,6 +795,7 @@ document.addEventListener("keydown", (event) => {
     } else {
       c += 1
     }
+tempInvincible();
     let fireBall = new Fireball(a, b, c, d)
     fireBall.isFacingLeft = moveLeft;
   }
@@ -843,10 +852,10 @@ tickAllObjects(characterList);
 
 setInterval(function() {
   globalTickItorator++;
-},100)
+}, 100)
 setInterval(function() {
   renderTiles(true);
-},1000)
+}, 1000)
 
 //----------------------------------------------------------CellVisual Library
 
