@@ -1,8 +1,8 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
-const characterList = {};
+let characterList = {};
 var blockList = {};
 const blockers = "";
-var globalTickItorator = 0;
+var globalTickIterator = 0;
 w.input.disabled = true
 cursorEnabled = false;
 w.setFlushInterval(1)
@@ -18,62 +18,43 @@ for (block in superMarioChars) {
 const smSmall = "▫";
 const sm_halfY = "▫▣";
 const sm_halfX = "▫";
-const sm_backGround = "◠╭╮▫⡀⠂⠁";
+const sm_backGround = "◠╭╮▫⡀⠂⠁💩";
 const sm_destructable = "";
-const passthrough_erase = "▫⡀⠂⠁";
+const passthrough_erase = "▫⡀⠂⠁💩";
 const sm_hurts = "⡀⠂⠁☵";
 const sm_hurts_fire = "⡀⠂⠁☵";
 const sm_enemy = "ቶዱዳጰጀደፃይያጶጆዸ"
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
-function CellToPixelCoords(cellCoords = [0, 0, 0, 0])
-// arguments can either be [x, y, z, w] or x, y, z, w
-{
+const CellToPixelCoords = (...cellCoords) => {
+  let [x = 0, y = 0, z = 0, w = 0] = Array.isArray(cellCoords[0]) ? cellCoords[0] : cellCoords;
 
-  let x, y, z, w;
-  // If input is an array
-  if (Array.isArray(cellCoords) && cellCoords.length < 5) {
-    [x = 0, y = 0, z = 0, w = 0] = cellCoords;
-  }
-  // If input is four separate arguments
-  else if (arguments.length < 5) {
-    [x = 0, y = 0, z = 0, w = 0] = arguments;
-  }
-  // Invalid input
-  else {
-    console.error('CellToPixelCoords: Invalid cellCoords. Arguments can either be [x, y, z, w] or x, y, z, w. Your cellCoords was: ' + cellCoords);
+  if (cellCoords.length > 4 || x === undefined || y === undefined || z === undefined || w === undefined) {
+    console.error(`CellToPixelCoords: Invalid cellCoords. Arguments can either be [x, y, z, w] or x, y, z, w. Your cellCoords was: ${cellCoords}`);
     return;
   }
-  let X = ((Math.round(x) * tileW) + (z) * cellW) + Math.round(positionX) + Math.round(owotWidth / 2);
-  let Y = ((Math.round(y) * tileH) + (w) * cellH) + Math.round(positionY) + Math.round(owotHeight / 2);
+
+  const X = Math.round(x) * tileW + z * cellW + Math.round(positionX) + Math.round(owotWidth / 2);
+  const Y = Math.round(y) * tileH + w * cellH + Math.round(positionY) + Math.round(owotHeight / 2);
+
   return [X, Y];
 }
 
 
-function PixelToCellCoords(pixelCoords = [0, 0]) {
-  // arguments can either be [x, y] or x, y
 
-  let x, y;
+const PixelToCellCoords = (...pixelCoords) => {
+  let [x = 0, y = 0] = Array.isArray(pixelCoords[0]) ? pixelCoords[0] : pixelCoords;
 
-  // If input is an array
-  if (Array.isArray(pixelCoords) && pixelCoords.length < 3) {
-    [x = 0, y = 0] = pixelCoords;
-  }
-  // If input is two separate arguments
-  else if (arguments.length < 3) {
-    [x = 0, y = 0] = arguments;
-  }
-  // Invalid input
-  else {
-    console.error('PixelToCellCoords: Invalid pixelCoords. Arguments can either be [x, y] or x, y. Your pixelCoords was: ' + pixelCoords);
+  if (pixelCoords.length > 2 || x === undefined || y === undefined) {
+    console.error(`PixelToCellCoords: Invalid pixelCoords. Arguments can either be [x, y] or x, y. Your pixelCoords was: ${pixelCoords}`);
     return;
   }
 
   return getTileCoordsFromMouseCoords(x, y);
 }
 
-function Lerp(start = 0, end = 0, amt = 0.5, roundResult = false) {
+const Lerp = (start = 0, end = 0, amt = 0.5, roundResult = false) => {
   let value = (1 - amt) * start + amt * end;
   if (roundResult) {
     value = Math.round(value);
@@ -81,35 +62,50 @@ function Lerp(start = 0, end = 0, amt = 0.5, roundResult = false) {
   return value;
 }
 
-function LerpArray(startArray, endArray = startArray * 0, amt = 0.5, roundResult = false) {
-  let resultArray = [];
-
-  for (let i = 0; i < startArray.length; i++) {
-    let value = Lerp(startArray[i], endArray[i], amt, roundResult);
-    resultArray.push(value);
-  }
-
+const LerpArray = (startArray, endArray = startArray.map(() => 0), amt = 0.5, roundResult = false) => {
+  let resultArray = startArray.map((value, i) => Lerp(value, endArray[i], amt, roundResult));
   return resultArray;
 }
 
-function ScrollWorld(offset = [0, 0]) {
-  let x, y;
+const centerPlayer = (coords, offset = [0, 0], lerpSpeed = 0.01, ...rest) => {
+  let x = 0,
+    y = 0;
+  // If input is an array
+  if (Array.isArray(offset) && offset.length < 3) {
+    [x = 0, y = 0] = offset;
+  }
+  // If input is two separate arguments
+  else if (rest.length < 2) {
+    [x = 0, y = 0] = rest;
+  }
+  // Invalid input
+  else {
+    console.error(`centerPlayer: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ${offset}`);
+    return;
+  }
+  return ScrollWorld(LerpArray([0, 0], SubtractArrays(CellToPixelCoords(coords), [(owotWidth / 2) + x, (owotHeight / 2) + y]), lerpSpeed));
+};
+
+const ScrollWorld = (offset = [0, 0], ...rest) => {
+  let x = 0,
+    y = 0;
 
   // If input is an array
   if (Array.isArray(offset) && offset.length < 3) {
     [x = 0, y = 0] = offset;
   }
   // If input is two separate arguments
-  else if (arguments.length < 3) {
-    [x = 0, y = 0] = arguments;
+  else if (rest.length < 2) {
+    [x = 0, y = 0] = rest;
   }
   // Invalid input
   else {
-    console.error('ScrollWorld: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ' + offset);
+    console.error(`ScrollWorld: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ${offset}`);
     return;
   }
-  var deltaX = Math.trunc(x);
-  var deltaY = Math.trunc(y);
+
+  const deltaX = Math.trunc(x);
+  const deltaY = Math.trunc(y);
 
   positionY -= deltaY;
   positionX -= deltaX;
@@ -120,23 +116,21 @@ function ScrollWorld(offset = [0, 0]) {
   });
 
   return [deltaY, deltaX];
-}
+};
 
-function SubtractArrays(arr1, arr2, roundResult = false) {
-  let resultArray = [];
 
-  for (let i = 0; i < arr1.length; i++) {
-    let value = arr1[i] - arr2[i];
+const SubtractArrays = (arr1, arr2, roundResult = false) => {
+  const resultArray = arr1.map((value, index) => {
+    let result = value - arr2[index];
     if (roundResult) {
-      value = Math.round(value);
+      result = Math.round(result);
     }
-    resultArray.push(value);
-  }
-
+    return result;
+  });
   return resultArray;
 }
 
-function AddArrays(arr1, arr2, roundResult = false) {
+const AddArrays = (arr1, arr2, roundResult = false) => {
   // Create a new array to store the results
   const resultArray = [];
 
@@ -153,158 +147,141 @@ function AddArrays(arr1, arr2, roundResult = false) {
   return resultArray;
 }
 
-function centerPlayer(coords, offset = [0, 0], lerpSpeed = 0.01) {
-  let x, y;
-  // If input is an array
-  if (Array.isArray(offset) && offset.length < 3) {
-    [x = 0, y = 0] = offset;
-  }
-  // If input is two separate arguments
-  else if (arguments.length < 4) {
-    [x = 0, y = 0] = arguments;
-  }
-  // Invalid input
-  else {
-    console.error('centerPlayer: Invalid offset. Arguments can either be [x, y] or x, y. Your offset was: ' + offset);
-    return;
-  }
-  return ScrollWorld(LerpArray([0, 0], SubtractArrays(CellToPixelCoords(coords), [(owotWidth / 2) + x, (owotHeight / 2) + y]), lerpSpeed))
-}
-
 function CorrectLocation(...args) {
-  let location;
-  if (Array.isArray(args[0])) {
-    location = args[0];
-  } else {
-    location = args;
-  }
-  location[0] = Math.round(location[0]);
-  location[1] = Math.round(location[1]);
-  location[2] = Math.round(location[2]);
-  location[3] = Math.round(location[3]);
+  let location = Array.isArray(args[0]) ? args[0] : args;
 
-  const outlocation = location.slice();
+  const roundedLocation = location.map((coord) => Math.round(coord));
+  const outLocation = [...roundedLocation];
 
-  if (Math.round(location[2]) > 15) {
-    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) + 16) % 16)
-    outlocation[0] += Math.abs((Math.ceil(-(location[2]) / 16)))
+  if (roundedLocation[2] > 15) {
+    outLocation[2] = (((roundedLocation[2] % 16 + (roundedLocation[2] < 0 ? 17 : 0)) + 16) % 16);
+    outLocation[0] += Math.abs(Math.ceil(-roundedLocation[2] / 16));
   }
-  if (Math.round(location[2]) < 0) {
-    outlocation[2] = (((location[2] % 16 + (location[2] < 0 ? 17 : 0)) - 1 + 16) % 16)
-    outlocation[0] -= Math.ceil(-(location[2]) / 16)
+  if (roundedLocation[2] < 0) {
+    outLocation[2] = (((roundedLocation[2] % 16 + (roundedLocation[2] < 0 ? 17 : 0)) - 1 + 16) % 16);
+    outLocation[0] -= Math.ceil(-roundedLocation[2] / 16);
   }
-  if (Math.round(location[3]) > 7) {
-    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) + 8) % 8)
-    outlocation[1] += Math.abs((Math.ceil(-(location[3]) / 8)))
+  if (roundedLocation[3] > 7) {
+    outLocation[3] = (((roundedLocation[3] % 8 + (roundedLocation[3] < 0 ? 9 : 0)) + 8) % 8);
+    outLocation[1] += Math.abs(Math.ceil(-roundedLocation[3] / 8));
   }
-  if (Math.round(location[3]) < 0) {
-    outlocation[3] = (((location[3] % 8 + (location[3] < 0 ? 9 : 0)) - 1 + 8) % 8)
-    outlocation[1] -= Math.ceil(-(location[3]) / 8);
+  if (roundedLocation[3] < 0) {
+    outLocation[3] = (((roundedLocation[3] % 8 + (roundedLocation[3] < 0 ? 9 : 0)) - 1 + 8) % 8);
+    outLocation[1] -= Math.ceil(-roundedLocation[3] / 8);
   }
-  return outlocation;
+
+  return outLocation;
 }
 
-function DoesCellContainChars(coord, specificChars) {
+const DoesCellContainChars = (coord, specificChars = "") => {
   const [x, y, z, w] = CorrectLocation(coord);
 
   const char = getChar(Math.round(x), Math.round(y), Math.round(z), Math.round(w));
-  if (specificChars === undefined || specificChars === null || specificChars === "") {
+  if (!specificChars) {
     return [char !== " ", char];
   }
 
   return [specificChars.includes(char), char];
 }
 
-function GetPlayer(id) {
-  // if name is null it will return the first player
-  for (const key in characterList) {
-    if (characterList[key] instanceof Player && (id === undefined || characterList[key].id === id)) {
-      return characterList[key];
-    }
-  }
-  return null;
+const GetPlayer = (id = null) => {
+  const player = Object.values(characterList).find((char) => char instanceof Player && (id === null || char.id === id));
+  return player || null;
 }
 
-
-
-
-function canPlayerMove(frame, velocity) {
-
-  let v = Math.abs(velocity);
+const canPlayerMove = (frame, velocity) => {
+  const v = Math.abs(velocity);
   if (v > 6) {
     return !((frame % Math.round(10 / (10 - v))) < ((10 - v) / 10))
   } else {
-
     return ((frame % Math.round(10 / v)) < (v / 10));
-
   }
 }
 
-function CycleImage(imageArray, index) {
-  return imageArray[globalTickItorator % imageArray.length];
-}
 
-function FindCharsInViewport(pattern, caseInsensitive, ignoreCombining) {
-  var re = new RegExp(pattern);
-  var visible = getVisibleTiles();
-  var chars = [];
-  for (var i = 0; i < visible.length; i++) {
-    var coord = visible[i];
-    var tile = tiles[coord[1] + "," + coord[0]];
-    if (!tile) continue;
-    var con = advancedSplit(tile.content, false, ignoreCombining);
-    for (var p = 0; p < con.length; p++) {
+const CycleImage = (imageArray, index) => {
+  return imageArray[globalTickIterator % imageArray.length];
+};
 
-      if ((caseInsensitive && re.test(con[p])) || (!caseInsensitive && re.test(con[p]))) continue;
-      var cx = p % tileC;
-      var cy = Math.floor(p / tileC);
+const findCharsInViewport = (pattern, caseInsensitive, ignoreCombining) => {
+  const re = new RegExp(pattern);
+  const visible = getVisibleTiles();
+  const chars = [];
+
+  for (const coord of visible) {
+    const tile = tiles[`${coord[1]},${coord[0]}`];
+
+    if (!tile) {
+      continue;
+    }
+
+    const content = advancedSplit(tile.content, false, ignoreCombining);
+
+    for (let p = 0; p < content.length; p++) {
+      if ((caseInsensitive && re.test(content[p])) || (!caseInsensitive && re.test(content[p]))) {
+        continue;
+      }
+
+      const cx = p % tileC;
+      const cy = Math.floor(p / tileC);
       chars.push([coord[0], coord[1], cx, cy]);
-
     }
   }
+
   return chars;
-}
+};
 
 function getJSONFromCell(x, y, z, w) {
   return JSON.parse("{" + getLink(x, y, z, w).url.replace(/.*\/\//g, "") + "}");
 }
 
-function addIfNewLocation(List, NewObject) {
-  const {
-    location
-  } = NewObject;
-  let locationFound = false;
-
-  for (const key in List) {
-    const obj = List[key];
-    if (obj.location && obj.location.every((val, i) => val === location[i])) {
-      locationFound = true;
-      break;
-    }
+async function getDeltaTime() {
+  return await new Promise(resolve => {
+    window.requestAnimationFrame(() => {
+      const now = performance.now();
+      const deltaTime = now - window.lastTime;
+      window.lastTime = now;
+      resolve(deltaTime);
+    });
+  });
+}
+async function tickAllObjects(list) {
+  w.render();
+  if (countObjectsByClass(characterList, "Fireball") == 0) {
+    player.canFire = true;
+  }
+  if (!player.canFire) {
+    deleteObjectsByClass(characterList, "Fireball")
   }
 
-  if (!locationFound) {
-    List[Object.keys(List).length] = NewObject;
+  for (const key of Object.keys(list)) {
+    const o = list[key];
+    await o.tick();
   }
 
-  return locationFound;
+  requestAnimationFrame(() => tickAllObjects(list));
 }
 
-
-
-
-function tickAllObjects(List) {
-  w.render();
-  for (const key in List) {
-    const o = List[key];
-
-    o.tick();
-
+const countObjectsByClass = (list, className) => {
+  let count = 0;
+  for (const key of Object.keys(list)) {
+    const o = list[key];
+    if (o.constructor.name === className) {
+      count++;
+    }
   }
-
-  //player.tick();
-
-  requestAnimationFrame(() => tickAllObjects(List));
+  return count;
+}
+const deleteObjectsByClass = (list, className) => {
+  let count = 0;
+  for (const key of Object.keys(list)) {
+    const o = list[key];
+    if (o.constructor.name === className && o.lives <= 0) {
+      delete list[key];
+      count++;
+    }
+  }
+  return count;
 }
 //--------------------------------------------END OF HELPER FUNCTIONS----------------------------------------------------------------------
 
@@ -317,6 +294,7 @@ class Character {
   constructor(x, y, z, w, id) {
     this.frame = 0;
     this.frameSlowdown = 0;
+    this.lastFrameTimestamp = performance.now();
     this.name = "character";
     this.location = [x, y, z, w];
     this.velocity = [0, 0];
@@ -328,6 +306,7 @@ class Character {
     this.moveUp = false;
     this.moveLeft = false;
     this.moveRight = false;
+    this.canFire = true;
     this.squat = false;
     this.jumped = false;
     this.jumpFrames = 3;
@@ -338,7 +317,7 @@ class Character {
     this.cellRep = ["🯅"];
     this.blockers = blockers;
     this.sprites = {};
-    this.tickEveryN = 1;
+    this.tickEveryN = 3;
     this.eraseChar = " ";
     this.canTick = true;
     this.canTakeDamage = true;
@@ -355,46 +334,24 @@ class Character {
 
   onDie() {
     console.log(`${this.id} died`);
-    let [x, y, z, w] = CorrectLocation(this.location);
+    const [x, y, z, w] = CorrectLocation(this.location);
     writeCharTo(" ", "#000", x, y, z, w);
     if (this.isProjectile) {
-
-      if (this.isFacingLeft) {
-        let [a, b, c, d] = CorrectLocation([x, y, z - 1, w]);
-
-        //sm_jumpThrough sm_backGround
-        if (!DoesCellContainChars([a, b, c, d], sm_backGround)[0]) {
-          let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
-          if (isenemy) {
-            writeCharTo("⡀", "#000", a, b, c, d);
-          } else {
-            writeCharTo(" ", "#000", a, b, c, d);
-          }
-          writeCharTo(" ", "#000", a, b, c, d);
-          writeCharTo(" ", "#000", x, y, z, w);
-        }
-      } else {
-        let [a, b, c, d] = CorrectLocation([x, y, z + 1, w]);
-        if (!DoesCellContainChars([a, b, c, d], sm_backGround)[0]) {
-          let [isenemy, CharE] = DoesCellContainChars([x, y, z + 1, w], sm_enemy);
-          if (isenemy) {
-            writeCharTo("⡀", "#000", a, b, c, d);
-          } else {
-            writeCharTo(" ", "#000", a, b, c, d);
-          }
-          writeCharTo(" ", "#000", x, y, z, w);
-        }
+      const [a, b, c, d] = CorrectLocation([x, y, z + (this.isFacingLeft ? -1 : 1), w]);
+      if (!DoesCellContainChars([a, b, c, d], sm_backGround)[0]) {
+        const [isEnemy, charE] = DoesCellContainChars([x, y, z + (this.isFacingLeft ? 1 : -1), w], sm_enemy);
+        writeCharTo(isEnemy ? "⡀" : " ", "#000", a, b, c, d);
+        writeCharTo(" ", "#000", x, y, z, w);
       }
     } else {
-      confirm("you died")
-      location.reload()
+      confirm("you died");
+      location.reload();
     }
     delete characterList[this.id];
   }
 
   onDamaged() {
     this.lives--;
-    console.log(`${this.id} damaged, lives left: ${this.lives}`);
     if (this.lives <= 0) {
       this.die();
     }
@@ -402,145 +359,108 @@ class Character {
   onFire() {
     if (this.canTakeDamage) {
       this.onDamaged();
-
-      //ዤዥ
-      if (this.isFacingLeft) {
-        this.cellRep = ["ዥ"]
-      } else {
-        this.cellRep = ["ዤ"]
-      }
+      const newCellRep = this.isFacingLeft ? ["ዥ"] : ["ዤ"];
+      this.cellRep = newCellRep;
       this.canTick = false;
       this.canTakeDamage = false;
-      const _this = this;
-      setTimeout(function() {
-
-        _this.canTick = true;
-        _this.canTakeDamage = false;
-
-        setTimeout(function() {
-          _this.canTakeDamage = true;
-
-        }, 2000)
-      }, 2000)
+      setTimeout(() => {
+        this.canTick = true;
+        this.canTakeDamage = false;
+        setTimeout(() => {
+          this.canTakeDamage = true;
+        }, 2000);
+      }, 2000);
     }
   }
   die() {
     this.alive = false;
+    this.lives = 0;
     this.onDie();
   }
-  update() {
-    this.frame++
-    if (this.frame > 10) {
-      this.frame = 1;
-    }
-  }
-  setVelocity() {
-    // first break out the location and velocity of the character.
-    var [x, y, z, w] = this.location;
-    var [vX, vY] = this.velocity;
 
-    //try moving up
+  setVelocity() {
+    this.superJumped = false;
+    // Destructure location and velocity variables from `this`
+    const [x, y, z, w] = this.location;
+    let [vX, vY] = this.velocity;
+
+    // Handle movement directions
     if (this.moveUp) {
       this.moveUp = false;
-      vY = -10;
-
-
-      //if there is a blocking char. you should be stopped. making you velocity y 0 but only if its positive because gravity should then take over.
-    }
-    //try moving left
-    if (this.moveLeft && !this.squat) {
-      this.cellRep = ["ይ", "ያ"]
-      this.isFacingLeft = true;
-      //check the cell to the left for any blocking chars to see if you can move left. 
-      //let blocked = DoesCellContainChars([x, y, z - 1, w], this.blockers);
-      //add nagative velocity to the x.
-      //if (!blocked) {
-      if (vX >= 0) {
-        vX = -1
+      if (this.squat) {
+        vY = -2.1;
+        this.superJumped = true;
+      } else {
+        vY = -2.01;
       }
-      vX -= 0.5
-      // }
-      //if there is a blocking char. you should be stopped. making you velocity x 0
+
     }
-    //try moving right
+    if (this.moveLeft && !this.squat) {
+      this.cellRep = ["ይ", "ያ"];
+      this.isFacingLeft = true;
+
+      // Handle blocked cells to the left
+      const [blocked, _] = DoesCellContainChars([x, y, z - 1, w], this.blockers);
+      if (!blocked && vX >= 0) {
+        vX = -1;
+      }
+      vX -= 0.5;
+    }
     if (this.moveRight && !this.squat) {
       this.cellRep = ["ዱ", "ዳ"];
-      //check the cell to the right for any blocking chars  to see if you can move right.
       this.isFacingLeft = false;
-      //let blocked = DoesCellContainChars([x, y, z + 1, w], this.blockers);
-      //add velocity to the x.
-      // if (!blocked) {
-      if (vX == 0) {
-        vX += 1
+
+      // Handle blocked cells to the right
+      const [blocked, _] = DoesCellContainChars([x, y, z + 1, w], this.blockers);
+      if (!blocked && vX === 0) {
+        vX += 1;
       }
-      vX += 0.5
-      // }
-      //if there is a blocking char. you should be stopped. making you velocity x 0
+      vX += 0.5;
     }
     if (this.squat) {
-      if (this.isFacingLeft) {
-        this.cellRep = ["ዸ"]
-      } else {
-        this.cellRep = ["ደ"]
-      }
+      this.cellRep = [this.isFacingLeft ? "ዸ" : "ደ"];
     }
-    let [isBG, BGchar] = DoesCellContainChars([x, y, z, w + 1], sm_backGround);
-    let blocked = DoesCellContainChars([x, y, z, w + 1], this.blockers)[0];
+
+    // Handle collisions and update character representation
+    const [isBG, BGchar] = DoesCellContainChars([x, y, z, w + 1], sm_backGround);
+    const [blocked, _] = DoesCellContainChars([x, y, z, w + 1], this.blockers);
 
     if (!blocked || isBG) {
       if (vY > 0) {
-        if (this.isFacingLeft) {
-          this.cellRep = ["ጆ"];
-        } else {
-          this.cellRep = ["ጀ"];
+        this.cellRep = [this.isFacingLeft ? "ጆ" : "ጀ"];
+        if (this.isProjectile) {
+          this.onDamaged();
         }
-
+      } else if (this.moveRight || this.moveLeft) {
+        if (Math.abs(vX) > 5) {
+          // Handle running
+        } else {
+          // Handle walking
+        }
       } else {
-        if (this.moveRight || this.moveLeft) {
-          if (Math.abs(vX) > 5) {
-            //running
-
-          } else {
-            //walking
-          }
-        } else {
-          //standing
-        }
+        // Handle standing
       }
-
-    } else {
-      if (!this.squat) {
-        if (this.moveRight || this.moveLeft) {
-          //walking
-        } else {
-          //standing
-
-          if (this.isFacingLeft) {
-            this.cellRep = ["ፃ"];
-          } else {
-            this.cellRep = ["ቶ"];
-          }
-
-        }
+    } else if (!this.squat) {
+      if (this.moveRight || this.moveLeft) {
+        // Handle walking
+      } else {
+        // Handle standing
+        this.cellRep = [this.isFacingLeft ? "ፃ" : "ቶ"];
       }
     }
 
-    //set the min max of the velocity to 100
-    this.velocity[0] = Math.max(Math.min(vX, 10), -10);
-    this.velocity[1] = Math.max(Math.min(vY, 10), -10);
+    // Set min and max velocity limits
+    this.velocity = [
+      Math.max(Math.min(vX, 10), -10),
+      Math.max(Math.min(vY, 10), -10),
+    ];
+
+    // Handle projectile movement
     if (this.isProjectile) {
       this.cellRep = ["⡀", "⠂", "⠁", "⠂"];
-      if (this.isFacingLeft) {
-        this.velocity[0] = -1
-
-      } else {
-        this.velocity[0] = 1
-      }
-
-
+      this.velocity[0] = this.isFacingLeft ? -1 : 1;
     }
   }
-
 
   //do the actual movement based on velocity
   move() {
@@ -630,9 +550,13 @@ class Character {
 
 
     if (this.alive) {
+if(this.superJumped){
+this.eraseChar = "💩";
+}
       writeCharTo(this.eraseChar, "#000", x1, y1, z1, w1);
     }
     [x, y, z, w] = CorrectLocation(this.location);
+
     if (DoesCellContainChars([x, y, z, w], passthrough_erase)[0]) {
       this.eraseChar = " ";
     } else {
@@ -641,17 +565,18 @@ class Character {
 
     }
     if (this.isProjectile) {
-      console.log(this.velocity[0])
       if (this.isFacingLeft) {
         let [isbg, Char] = DoesCellContainChars([x, y, z - 1, w], sm_backGround);
         if (!isbg && Char != " ") {
-          this.onDamaged();
+          this.lives = 0;
+
         }
       } else {
         let [isbg, Char] = DoesCellContainChars([x, y, z + 1, w], sm_backGround);
 
         if (!isbg && Char != " ") {
-          this.onDamaged();
+          this.lives = 0;
+
         }
 
 
@@ -672,21 +597,22 @@ class Character {
 
       writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
     }
-  }
-  slowDown() {
+    if (this.isProjectile) {
 
-    let [x, y, z, w] = this.location;
+      this.onDamaged();
+    }
+  }
+
+  slowDown() {
+    const [x, y, z, w] = this.location;
     let [vX, vY] = this.velocity;
 
     vX = Lerp(vX, 0, 0.1);
     if (!this.isProjectile) {
       this.velocity[0] = vX;
     }
-    if (vY < -2) {
-      vY = Lerp(vY, 1, 0.01);
-    } else {
-      vY = Lerp(vY, 1, 0.5);
-    }
+
+    vY = vY < -2 ? Lerp(vY, 1, 0.01) : Lerp(vY, 1, 0.5);
 
     if (DoesCellContainChars([x, y, z, w + 1], this.blockers)[0] && !DoesCellContainChars([x, y, z, w + 1], sm_backGround)[0]) {
       this.velocity[1] = 0;
@@ -694,34 +620,36 @@ class Character {
     } else {
       this.velocity[1] = vY;
     }
-
   }
   draw() {
     if (this.alive) {
-
-      let [a, b, c, d] = CorrectLocation(this.location);
-     // writeBuffer.push([b, a, d, c, getDate(), CycleImage(this.cellRep, globalTickItorator), globalTickItorator])
-     // network.write(writeBuffer.splice(0, 512))
+      const [a, b, c, d] = CorrectLocation(this.location);
+      // draw the character here
     }
   }
-  tick() {
-    if (this.alive && this.canTick) {
-      // Slow down the animation by dividing the time delta by 2
 
-      // Save the current timestamp for the next frame
+  async tick() {
+    if (this.alive && this.canTick) {
       this.frameSlowdown++;
       if (this.frameSlowdown == this.tickEveryN) {
-        this.update();
         this.setVelocity();
         this.move();
         this.slowDown();
         this.draw();
-        this.frameSlowdown = 0
 
+        this.frameSlowdown = 0
       }
-      // requestAnimationFrame(this.tick); // request next animation frame
+      if (this.isMain && !this.isProjectile) {
+        centerPlayer(this.location);
+      }
     }
+
+
   }
+
+
+
+
 
 }
 
@@ -741,122 +669,136 @@ class Fireball extends Character {
   constructor(x, y, z, w) {
     super(x, y, z, w, name + "_" + Object.keys(characterList).length);
     this.name = "fireball";
-    this.lives = 2;
+    this.lives = 30;
     this.id = this.name + "_" + (Object.keys(characterList).length - 1);
     this.isMain = false;
     this.onCreated();
     this.isProjectile = true;
+    this.tickEveryN = 4;
   }
 }
 
 var hitTimeout = setTimeout(AllowHits, 1000);
-function tempInvincible(){
-GetPlayer().canTakeDamage = false;
-clearTimeout(hitTimeout);
-hitTimeout = setTimeout(AllowHits, 1000);
+
+function tempInvincible() {
+  GetPlayer().canTakeDamage = false;
+  clearTimeout(hitTimeout);
+  hitTimeout = setTimeout(AllowHits, 1000);
 }
-function AllowHits (){
-GetPlayer().canTakeDamage = true;
-clearTimeout(hitTimeout);
+
+function AllowHits() {
+  GetPlayer().canTakeDamage = true;
+  clearTimeout(hitTimeout);
 }
 
 //--------------------------------------------END OF CREATE CLASSES ----------------------------------------------------------------------
 
 //--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
 document.addEventListener("keydown", (event) => {
-  if (event.key === "w") {
+  const player = GetPlayer();
+  const isJumpKey = event.key === "w";
+  const isLeftKey = event.key === "a";
+  const isDownKey = event.key === "s";
+  const isRightKey = event.key === "d";
+  const isSpaceKey = event.key === " ";
 
-    if (GetPlayer().jumped == false) {
+  if (isJumpKey) {
+    if (!player.jumped) {
+      player.moveUp = true;
+      player.jumped = true;
 
-      GetPlayer().moveUp = true;
-      GetPlayer().jumped = true;
+    }
+  } else if (isLeftKey) {
+    player.moveLeft = true;
+  } else if (isDownKey) {
+    player.squat = true;
+  } else if (isRightKey) {
+    player.moveRight = true;
+  }
+
+  if (isSpaceKey) {
+    console.log(player.canFire, countObjectsByClass(characterList, "Fireball"))
+    const isFacingLeft = player.isFacingLeft;
+    const [a, b, c, d] = player.location;
+
+    if (player.canFire) {
+      if (countObjectsByClass(characterList, "Fireball") < 3) {
+deleteObjectsByClass(characterList, "Fireball")
+
+        const fireBall = new Fireball(a, b, isFacingLeft ? c - 1 : c + 1, d);
+        fireBall.isFacingLeft = isFacingLeft;
+        tempInvincible();
+
+      } else {
+        player.canFire = false;
+        deleteObjectsByClass(characterList, "Fireball")
+        if (countObjectsByClass(characterList, "Fireball") == 0) {
+          player.canFire = true;
+        }
+
+      }
+
     }
 
-    // Handle the "W" key press
-  } else if (event.key === "a") {
-    GetPlayer().moveLeft = true;
-    // Handle the "A" key press
-  }
-  if (event.key === "s") {
-    GetPlayer().squat = true;
-    // Handle the "S" key press
-  }
-  if (event.key === "d") {
-    GetPlayer().moveRight = true;
-    // Handle the "D" key press
-  }
-  if (event.key === " ") {
-    // Handle the spacebar press
-    let moveLeft = GetPlayer().isFacingLeft;
-    let [a, b, c, d] = GetPlayer().location;
-    if (moveLeft) {
-      c -= 1;
 
-    } else {
-      c += 1
-    }
-tempInvincible();
-    let fireBall = new Fireball(a, b, c, d)
-    fireBall.isFacingLeft = moveLeft;
+
   }
 });
 
 document.addEventListener("keyup", (event) => {
-  if (event.key === "w") {
-    GetPlayer().moveUp = false;
-    // Handle the "W" key release
-  }
-  if (event.key === "a") {
-    GetPlayer().moveLeft = false;
-    // Handle the "A" key release
-  }
-  if (event.key === "s") {
-    // Handle the "S" key release
-    GetPlayer().squat = false;
-  }
-  if (event.key === "d") {
-    GetPlayer().moveRight = false;
-    // Handle the "D" key release
-  }
-  if (event.key === " ") {
-    // Handle the spacebar release
+  const player = GetPlayer();
+  const isJumpKey = event.key === "w";
+  const isLeftKey = event.key === "a";
+  const isDownKey = event.key === "s";
+  const isRightKey = event.key === "d";
+
+  if (isJumpKey) {
+    player.moveUp = false;
+if(player.canFly){
+    player.jumped = false;
+}
+  } else if (isLeftKey) {
+    player.moveLeft = false;
+  } else if (isDownKey) {
+    player.squat = false;
+  } else if (isRightKey) {
+    player.moveRight = false;
   }
 });
 
 
 //--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
-var player = "";
+let player = null;
 
 function makePlayer() {
+  const playerStarts = FindCharsInViewport("[^⛹]", true, true);
 
-  FindCharsInViewport("[^⛹]", true, true).forEach(function(player_starts) {
-    if (player == "") {
-      var [e, r, t, y] = player_starts;
+  playerStarts.forEach((start) => {
+    if (!player) {
+      const [a, b, c, d] = start;
+      const charInfo = getCharInfo(a, b, c, d);
 
-      if (getCharInfo(e, r, t, y).protection == 2) {
-        var StartLocation = getJSONFromCell(e, r, t, y)["start"];
-        localWriteChar(e, r, t, y, " ", "#fff")
-        if (StartLocation == "undefined") {
-          StartLocation = [0, 0, 1, 1];
-        }
-        [e, r, t, y] = StartLocation;
-
-        player = new Player(e, r, t, y, "luigi")
+      if (charInfo.protection === 2) {
+        const startLocation = getJSONFromCell(a, b, c, d).start || [0, 0, 1, 1];
+        localWriteChar(a, b, c, d, " ", "#fff");
+        const [x, y, z, w] = startLocation;
+        player = new Player(x, y, z, w, "luigi");
       }
     }
-  })
+  });
 }
-player = new Player(0, 0, 0, 0, "luigi")
+
+player = new Player(0, 0, 0, 0, "luigi");
 
 tickAllObjects(characterList);
 
-setInterval(function() {
-  globalTickItorator++;
-}, 100)
-setInterval(function() {
-  renderTiles(true);
-}, 1000)
+setInterval(() => {
+  globalTickIterator++;
+}, 100);
 
+setInterval(() => {
+  renderTiles(true);
+}, 1000);
 //----------------------------------------------------------CellVisual Library
 
 const SMImageSrc = {
@@ -908,66 +850,53 @@ const SMImageSrc = {
 }
 
 
-function findImageCharKey(imageSrcObject, charCode, str = "") {
+const findImageCharKey = (imageSrcObject, charCode, str = "") => {
   const char = String.fromCharCode(charCode);
   const index = str.indexOf(char);
   if (index >= 0) {
     return [Object.keys(imageSrcObject)[index], index];
   }
-}
+};
 
-function isCharOfType(charCode, str = "") {
+const isCharOfType = (charCode, str = "") => {
   const char = String.fromCharCode(charCode);
   const index = str.indexOf(char);
   return index >= 0;
-}
+};
 
-function isValidImageSymbol(charCode) {
-  return isCharOfType(charCode, superMarioChars)
+const isValidImageSymbol = (charCode) => isCharOfType(charCode, superMarioChars);
 
-}
-
-function fillImageChar(charCode, textRender, x, y, clampW, clampH) {
-  var tmpCellW = clampW / tileC;
-  var tmpCellH = clampH / tileR;
-  var sx = Math.floor(x * tmpCellW);
-  var sy = Math.floor(y * tmpCellH);
-  var ex = Math.floor((x + 1) * tmpCellW);
-  var ey = Math.floor((y + 1) * tmpCellH);
+const fillImageChar = (charCode, textRender, x, y, clampW, clampH) => {
+  let tmpCellW = clampW / tileC;
+  let tmpCellH = clampH / tileR;
+  let sx = Math.floor(x * tmpCellW);
+  let sy = Math.floor(y * tmpCellH);
+  let ex = Math.floor((x + 1) * tmpCellW);
+  let ey = Math.floor((y + 1) * tmpCellH);
 
   tmpCellW = ex - sx;
   tmpCellH = ey - sy;
 
-  // Super Mario Blocks
   const [charKey, charIndex] = findImageCharKey(SMImageSrc, charCode, superMarioChars);
   if (charKey !== undefined) {
-    const imageSrc = CycleImage(SMImageSrc[charKey], globalTickItorator);
+    const imageSrc = CycleImage(SMImageSrc[charKey], globalTickIterator);
     charImages[charIndex].src = imageSrc;
   } else {
-    return false
+    return false;
   }
+
   if (isCharOfType(charCode, sm_halfY)) {
-
     sy -= tmpCellH - (tmpCellH * 1.5);
-
-
-
   }
+
   if (isCharOfType(charCode, sm_halfX)) {
-
-
     sx -= tmpCellW - (tmpCellW * 1.5);
-
-
   }
-
 
   textRender.drawImage(charImages[charIndex], sx, sy, ex - sx, ey - sy);
 
-
-
-  return true
-}
+  return true;
+};
 
 function fillBlockChar(charCode, textRender, x, y, clampW, clampH, flags) {
   var isBold = flags ? flags & 1 : 0;
