@@ -7,28 +7,33 @@ w.input.disabled = true
 cursorEnabled = false;
 w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
-const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁";
+const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿ";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
   charImages.push(new Image)
 }
 
+
+
 const smSmall = "▫";
 const sm_halfY = "▫▣";
+const sm_random = "▣";
 const sm_halfX = "▫";
-const sm_backGround = "◠╭╮▫⡀⠂⠁💩";
+const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚"
 const sm_destructable = "";
-const passthrough_erase = "▫⡀⠂⠁💩";
+const sm_feather = "࿙࿚‚"
+const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚"
 const sm_hurts = "⡀⠂⠁☵";
 const sm_hurts_fire = "⡀⠂⠁☵";
-const sm_enemy = "ቶዱዳጰጀደፃይያጶጆዸ"
+const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
+const sm_enemy = "ቶዱዳጰጀደፃይያጶጆዸጵዹጺጴቆኖፂፏዶጳቇጿ"
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
 const CellToPixelCoords = (...cellCoords) => {
-  let [x = 0, y = 0, z = 0, w = 0] = Array.isArray(cellCoords[0]) ? cellCoords[0] : cellCoords;
+  const [x = 0, y = 0, z = 0, w = 0] = Array.isArray(cellCoords[0]) ? cellCoords[0] : cellCoords;
 
   if (cellCoords.length > 4 || x === undefined || y === undefined || z === undefined || w === undefined) {
     console.error(`CellToPixelCoords: Invalid cellCoords. Arguments can either be [x, y, z, w] or x, y, z, w. Your cellCoords was: ${cellCoords}`);
@@ -283,6 +288,35 @@ const deleteObjectsByClass = (list, className) => {
   }
   return count;
 }
+const createCellReps = (data) => {
+  const result = {};
+
+  const processKey = (key, value) => {
+    if (Array.isArray(value)) {
+      result[key] = {
+        left: [value[0]],
+        right: [value[1]]
+      };
+    } else if (typeof value === "object") {
+      result[key] = {
+        left: value.left,
+        right: value.right
+      };
+    } else {
+      result[key] = {
+        left: [value],
+        right: [value]
+      };
+    }
+  };
+
+  for (const [key, value] of Object.entries(data)) {
+    processKey(key, value);
+  }
+
+  return result;
+};
+
 //--------------------------------------------END OF HELPER FUNCTIONS----------------------------------------------------------------------
 
 
@@ -290,6 +324,67 @@ const deleteObjectsByClass = (list, className) => {
 
 //--------------------------------------------START CREATE CLASSES ------------------------------------------------------------------------
 
+const marioCellReps = createCellReps({
+  stand: ["ፃ", "ቶ"],
+  squat: ["ዸ", "ደ"],
+  run: {
+    left: ["ይ", "ያ"],
+    right: ["ዱ", "ዳ"]
+  },
+  jump: ["ጶ", "ጰ"],
+  fall: ["ጆ", "ጀ"],
+  burned: ["ዥ", "ዤ"],
+  dead: " ",
+}, );
+
+const marioFlyCellReps = createCellReps({
+  stand: ["ፂ", "ጵ"],
+  squat: ["ጿ", "ኖ"],
+  run: {
+    left: ["ፏ", "ዶ"],
+    right: ["ዹ", "ጺ"]
+  },
+  jump: ["ጳ", "ጴ"],
+  fall: ["ቇ", "ቆ"],
+  burned: ["ዥ", "ዤ"],
+  dead: " ",
+}, );
+const fireballCellReps = createCellReps({
+  stand: {
+    left: ["⡀", "⠂", "⠁", "⠂"],
+    right: ["⡀", "⠂", "⠁", "⠂"]
+  },
+  squat: ["⡀", "⠂", "⠁", "⠂"],
+  run: ["⡀", "⠂", "⠁", "⠂"],
+  jump: ["⡀", "⠂", "⠁", "⠂"],
+  fall: ["⠂"],
+  burned: ["⡀", "⠂", "⠁", "⠂"],
+  dead: " ",
+}, );
+const featherCellReps = createCellReps({
+  stand: "‚",
+  squat: {
+    left: ["࿙", "࿚"],
+    right: ["࿙", "࿚"]
+  },
+  run: {
+    left: ["࿙", "࿚"],
+    right: ["࿙", "࿚"]
+  },
+  jump: {
+    left: ["࿙", "࿚"],
+    right: ["࿙", "࿚"]
+  },
+  fall: {
+    left: ["࿙", "࿚"],
+    right: ["࿙", "࿚"]
+  },
+  burned: {
+    left: ["࿙", "࿚"],
+    right: ["࿙", "࿚"]
+  },
+  dead: " ",
+}, );
 class Character {
   constructor(x, y, z, w, id) {
     this.frame = 0;
@@ -313,8 +408,10 @@ class Character {
     this.onPlatform = false;
     this.isMain = false;
     this.isProjectile = false;
+    this.isFeather = false;
     this.imagURL = "";
-    this.cellRep = ["🯅"];
+    this.cellReps = {};
+    this.cellRep = [" "];
     this.blockers = blockers;
     this.sprites = {};
     this.tickEveryN = 3;
@@ -343,7 +440,9 @@ class Character {
         writeCharTo(isEnemy ? "⡀" : " ", "#000", a, b, c, d);
         writeCharTo(" ", "#000", x, y, z, w);
       }
-    } else {
+    } else if (this.isFeather) {
+
+    } else if (this.isMain) {
       confirm("you died");
       location.reload();
     }
@@ -355,11 +454,18 @@ class Character {
     if (this.lives <= 0) {
       this.die();
     }
+    if (this.isMain && this.canFly) {
+      this.canFly = false;
+      this.cellReps = marioCellReps;
+    }
   }
+
+
   onFire() {
     if (this.canTakeDamage) {
       this.onDamaged();
-      const newCellRep = this.isFacingLeft ? ["ዥ"] : ["ዤ"];
+
+      const newCellRep = this.cellReps.burned[this.isFacingLeft ? 'left' : 'right'];
       this.cellRep = newCellRep;
       this.canTick = false;
       this.canTakeDamage = false;
@@ -396,7 +502,8 @@ class Character {
 
     }
     if (this.moveLeft && !this.squat) {
-      this.cellRep = ["ይ", "ያ"];
+
+      this.cellRep = this.cellReps.run[this.isFacingLeft ? 'left' : 'right'];
       this.isFacingLeft = true;
 
       // Handle blocked cells to the left
@@ -407,7 +514,7 @@ class Character {
       vX -= 0.5;
     }
     if (this.moveRight && !this.squat) {
-      this.cellRep = ["ዱ", "ዳ"];
+      this.cellRep = this.cellReps.run[this.isFacingLeft ? 'left' : 'right'];
       this.isFacingLeft = false;
 
       // Handle blocked cells to the right
@@ -418,7 +525,7 @@ class Character {
       vX += 0.5;
     }
     if (this.squat) {
-      this.cellRep = [this.isFacingLeft ? "ዸ" : "ደ"];
+      this.cellRep = this.cellReps.squat[this.isFacingLeft ? 'left' : 'right'];
     }
 
     // Handle collisions and update character representation
@@ -427,14 +534,17 @@ class Character {
 
     if (!blocked || isBG) {
       if (vY > 0) {
-        this.cellRep = [this.isFacingLeft ? "ጆ" : "ጀ"];
+
+        this.cellRep = this.cellReps.fall[this.isFacingLeft ? 'left' : 'right'];
         if (this.isProjectile) {
           this.onDamaged();
+
         }
       } else if (this.moveRight || this.moveLeft) {
         if (Math.abs(vX) > 5) {
           // Handle running
         } else {
+
           // Handle walking
         }
       } else {
@@ -445,7 +555,12 @@ class Character {
         // Handle walking
       } else {
         // Handle standing
-        this.cellRep = [this.isFacingLeft ? "ፃ" : "ቶ"];
+
+
+        this.cellRep = this.cellReps.stand[this.isFacingLeft ? 'left' : 'right'];
+        if (this.isFeather) {
+          this.onDamaged();
+        }
       }
     }
 
@@ -457,13 +572,19 @@ class Character {
 
     // Handle projectile movement
     if (this.isProjectile) {
-      this.cellRep = ["⡀", "⠂", "⠁", "⠂"];
       this.velocity[0] = this.isFacingLeft ? -1 : 1;
     }
   }
 
   //do the actual movement based on velocity
   move() {
+    if (this.isMain) {
+      if (this.canFly) {
+        this.cellReps = marioFlyCellReps;
+      } else {
+        this.cellReps = marioCellReps;
+      }
+    }
     let [x, y, z, w] = this.location;
     if (DoesCellContainChars([x, y, z + 1, w], sm_hurts_fire)[0]) {
       if (!this.isProjectile && this.canTakeDamage) {
@@ -510,15 +631,27 @@ class Character {
       if (b < 0) {
         this.velocity[1] = Math.max(this.velocity[1], -2.5);
         //jumping
-        if (this.isFacingLeft) {
-          this.cellRep = ["ጶ"];
-        } else {
-          this.cellRep = ["ጰ"];
-        }
+        this.cellRep = this.cellReps.jump[this.isFacingLeft ? 'left' : 'right'];
       }
     } else {
       b = 0;
     }
+
+    const [isRandomBlock, rBlock] = DoesCellContainChars([x, y, z + a, w + b], sm_random);
+    if (isRandomBlock && b < 0) {
+      let [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b)
+      const RandomBlockData = (getJSONFromCell(fx, fy, fz, fw));
+      writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
+      if (RandomBlockData.upgrade == 'feather') {
+
+
+        [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
+        const feather = new Feather(fx, fy, fz, fw);
+
+      }
+
+    }
+
 
     let [shouldthrough, bchar] = DoesCellContainChars([x, y, z + a, w + b], sm_jumpThrough);
     [isBG, BGchar] = DoesCellContainChars([x, y, z + a, w + b], sm_backGround);
@@ -550,20 +683,24 @@ class Character {
 
 
     if (this.alive) {
-if(this.superJumped){
-this.eraseChar = "💩";
-}
+      if (this.superJumped) {
+        this.eraseChar = "💩";
+      }
       writeCharTo(this.eraseChar, "#000", x1, y1, z1, w1);
     }
     [x, y, z, w] = CorrectLocation(this.location);
+    if (DoesCellContainChars([x, y, z, w], sm_feather)[0]) {
+      if (this.isMain) {
+        this.canFly = true;
 
+      }
+    }
     if (DoesCellContainChars([x, y, z, w], passthrough_erase)[0]) {
       this.eraseChar = " ";
     } else {
       this.eraseChar = getChar(x, y, z, w);
-
-
     }
+
     if (this.isProjectile) {
       if (this.isFacingLeft) {
         let [isbg, Char] = DoesCellContainChars([x, y, z - 1, w], sm_backGround);
@@ -583,16 +720,22 @@ this.eraseChar = "💩";
       }
 
 
-      this.cellRep = ["⡀", "⠂", "⠁", "⠂"];
+
     }
 
 
     if (this.alive) {
+
       if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts_fire)[0]) {
         this.onFire();
       } else if (!this.isProjectile && DoesCellContainChars([x, y, z, w], sm_hurts)[0]) {
         this.onDamaged();
       }
+      if (this.isFeather && (DoesCellContainChars([x, y, z, w], marioSpecChars)[0] || DoesCellContainChars([x, y, z + 1, w], marioSpecChars)[0] || DoesCellContainChars([x, y, z - 1, w], marioSpecChars)[0] || DoesCellContainChars([x, y, z, w + 1], marioSpecChars)[0] || DoesCellContainChars([x, y, z, w - 1], marioSpecChars)[0])) {
+        this.lives = 1;
+        this.onDamaged();
+      }
+
 
 
       writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
@@ -661,6 +804,7 @@ class Player extends Character {
     this.id = name + "_" + (Object.keys(characterList).length - 1);
     this.big = false;
     this.isMain = true;
+    this.cellReps = marioCellReps;
     this.onCreated();
   }
 }
@@ -672,12 +816,27 @@ class Fireball extends Character {
     this.lives = 30;
     this.id = this.name + "_" + (Object.keys(characterList).length - 1);
     this.isMain = false;
-    this.onCreated();
+    this.cellReps = fireballCellReps;
     this.isProjectile = true;
     this.tickEveryN = 4;
+    this.onCreated();
   }
 }
-
+class Feather extends Character {
+  constructor(x, y, z, w) {
+    super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+    this.name = "feather";
+    this.lives = 20;
+    this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+    this.isMain = false;
+    this.onCreated();
+    this.isProjectile = false;
+    this.isFeather = true;
+    this.cellReps = featherCellReps;
+    this.tickEveryN = 20;
+    this.velocity = [0, -2];
+  }
+}
 var hitTimeout = setTimeout(AllowHits, 1000);
 
 function tempInvincible() {
@@ -723,7 +882,7 @@ document.addEventListener("keydown", (event) => {
 
     if (player.canFire) {
       if (countObjectsByClass(characterList, "Fireball") < 3) {
-deleteObjectsByClass(characterList, "Fireball")
+        deleteObjectsByClass(characterList, "Fireball")
 
         const fireBall = new Fireball(a, b, isFacingLeft ? c - 1 : c + 1, d);
         fireBall.isFacingLeft = isFacingLeft;
@@ -754,9 +913,9 @@ document.addEventListener("keyup", (event) => {
 
   if (isJumpKey) {
     player.moveUp = false;
-if(player.canFly){
-    player.jumped = false;
-}
+    if (player.canFly) {
+      player.jumped = false;
+    }
   } else if (isLeftKey) {
     player.moveLeft = false;
   } else if (isDownKey) {
@@ -782,13 +941,13 @@ function makePlayer() {
         const startLocation = getJSONFromCell(a, b, c, d).start || [0, 0, 1, 1];
         localWriteChar(a, b, c, d, " ", "#fff");
         const [x, y, z, w] = startLocation;
-        player = new Player(x, y, z, w, "luigi");
+        player = new Player(x, y, z, w, "luigi", marioCellReps);
       }
     }
   });
 }
 
-player = new Player(0, 0, 0, 0, "luigi");
+player = new Player(0, 0, 0, 0, "luigi", marioCellReps);
 
 tickAllObjects(characterList);
 
@@ -800,7 +959,11 @@ setInterval(() => {
   renderTiles(true);
 }, 1000);
 //----------------------------------------------------------CellVisual Library
-
+const imgBase = "https://ik.imagekit.io/poopman/Mario/";
+const imgUpdate = "?updatedAt=1680124723068";
+const getImage = (imgName) => {
+  return imgBase + imgName + imgUpdate;
+}
 const SMImageSrc = {
   nullPlayer: ["data:image/png;base64,"],
   grass: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAIAAACU62+bAAAChUlEQVQ4je2Uv46VVRTFf2ud7w6aIWooUWZaGG0ojcO8gQmJWon2xsCbGBNBX0AKQ3iKYRJbCrhjzTCJJaFiuN/ey+K7xCew8zTnZGftdf6ttQDAbIcRkpb1dt7Wh5Yix4YG0FBXBhQsWDGiUtSJhLK0BnCMEkNhASIglSKEDRC7Nbh8yKdnEXSQkGLTzeNDPdv36V4OXqAg/Piw1/sT90+co6jzzckgFXj0hUgenBA3TY5EK+4HJ4Du3bly/+HrMHP3CKEmvx3T3P3uI0DxLw9fCVB+/PYDI/3w/YdT1PjX31+ZNLl35wp0ZEl0lTOYZpUzlNKTn7784+mfg00Y0Iojvr55C4eOw6OnT5QJ11c3P3evdPzz7WQGHAGtANKUlMlspm7xXrHBcs9TUgu6DDBarSzFit1pRnKx99km4eV6Z3IAtfLJjbfA+Xpn2Qolk5g7Y6jVQW4YLlcLRygojlqUSyHVkemWLJYrtUcPiSJEREUkRo8gGPsHbwG6ztaXX/61izLFI6khzteXgKF0wKOZTTYUrIQnzZu5hqdJmRXBVltEBphlp3O+3g0zkipjjEpcAuhFcKgFUIKOyZSW5IUqAXvagmICRJQmIxOigKJ3n2MoV96ZJEqyd3Bx7eB1QqNW4oUYhql2hv/Fegwxq8KIaqG8ev3NJIOUltRqSzItqSmF0bak2CFRT+pspAHEAqwWOPK1G2/CODu9dPZ8Z/to2rhjrZJqK2mIWyWcqEl7I9oB3Ij47+e7RZt8fP0iQZosqWgp56fvpy0mABoMInO0nEST3D07MaDO1BmMpFtxlp4EKTR68Wy1qMZLCrUStM0biMeSVvOIqcFKEpbp//3wn/jhH6ItFkhCJ+yEAAAAAElFTkSuQmCC"],
@@ -846,6 +1009,23 @@ const SMImageSrc = {
   fireball1: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFFSURBVEhL7dHLSsNAGAXgk0xCjL0YWpAQUBTElSJekIKLIm58gHbhU3TtE4gLFz6BG3f2FVwqFUHcuChUsGqjRAzYW6YxM2PRIRXyCvkW88Nw5sDPIJVKpVKpfxQ5Y6IK4nvaNpvW68zQHM4Z+IC6RRgV8zJojB8IGf2lyhkLnuCIMDoxZ3K2vb4Cp1wCsQu2HwanQdksyVgsUWDmrMVi3lrIFi0VtgXsbsDe21Izc7ObikHqMhZLFIDSc4zC0ZfrdR6vbyO021CWl2CtraohjxyZiiULOH8HZbWM1z/Iul0PLQ9ovQF9iogxGZpIFggcj899TSi9/AjPg/sm8PqJ8KHJNS7cv9BEooATVKHyMyjE1zRSUz/6jeHV3Qvzuzc69IqMxZLfuDM1T8X4nvAj6OrhsEd5IZM3gu9uaDroKBf4twfwA3zZdBAfdXNkAAAAAElFTkSuQmCC"],
   fireball2: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAE+SURBVEhL7dG/SsNAAMfxX+6SS3L2D0pprX+igqjVQW0XoW+gj+Dq4IP4EA66CI6OLoJjEaRx1UGoKJQKKtKYpkm81FKOc8gr5LMcHF9+wx0ymcyEJk9l1IDhcXoQceNUMFpJkgS2FwVMo4f4jVzewqtMJ4g8FU/DfhiIi2meq1hCQ3l3C8Nq0fREdGJBP5eZkhoYUpzl5wp5UluBXrAgXnooN2qkaE/VYt2oy0xJDZg5o2TWt4ENB3xnDV7/G6jOgm2uajSMZ2SmpAZ0SgE2vl5fHI/MY1Dm+Ly6AZ46gBjJ6l9qgCT46rbuRsF9G1hysNDcQ2nZGT+3hoDhQ2ZKasAIxIP5Ez+G7nOCWxfo9OC/dRH6vscIPZKZkvrGQdNyoMeNoa1fkjy3CSEQff+dB8kx86JrzUUs00wmowB/PQBemw4IvJ0AAAAASUVORK5CYII="],
   fireball3: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAE+SURBVEhL7dE9SgNBGMbxZyab7GzMh8UmaggookEWothoQC8gWNl4AQuxF7yBhb0nsBbxABZiIUgIJqTUCEIKUTFRs9mPmTHIsIHMFfbXTPPnnXkZggnutrlIBb8ccF7N0RQlySTEcABhmefcc8+se7yo9B9VZ4RLfvCdEFWWTVOy6QCMgtp59F33kBrGlcoi2gCPyJOwNE3N3Q3ILQdfOQPEmYecy9LfPFtVWUR/gZ0mdmUZXv0J7xfX+JgabVkpwV5z4CWJtrI2QEqg/9BCyD0Ua1Us7e8A6ytA2kQQBqoa0wYYw0BkmIXMbBEol4HCDHizjdfGI+jAV9WYNsDq+S3/sy/8ThfovAG3bfzcNJDq9kRBslOVRfRvrGFBGoljwthRmJAgZHRHEEprKJo+IXvWnfes0lgsFovFJgB/62BnG00q2BwAAAAASUVORK5CYII="],
+  featherFall1: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAACXBIWXMAAAsTAAALEwEAmpwYAAACJUlEQVRIie2UwUvTYRjHv785NbEZjAgJkqnZ5uyHusxNiSgSOgRaKIEFdfHUpT/A6FTXAqWrHQwPjlhUBOoMSg8mLKP5ywllph3KZiElJJv7dGoSbjbwEuEXnsvL+/3wPM/7vI8BaDuybcu9A/hvAJY1PeQoKcGwFVFR6uBEvYeXU681F1/JjVBYVIwkPPni0yUx3SEqqyqoP+QhFpsVsGVIEu5iwZV86BLcaWH5/XMG/DbMugbezMxsCbDvlhRrk5RMSHOSDv6Uc1epOq+2SXkXdP7iZaKRF0a2Cuy+OrestQV5jjXLOGAXtT7pa1h57z6q81qHsNlkmibRaDQzBFBhQQG8HYPZEZKveli/JZI39/Nb/f39eL1eIpHI2U09AOSrcXO/UTDQRup6A8kbNSQnT5JaHv8D4vf7sSxrMwBQbf0RQg8fpQ2pb+MkRqtJxcfSZ93d3TidTjICAB32NfLgyVDasL4UJjHqIRV/BsDgYJDmpqbsAECmaRIKhTYyWRomEfaQ+vIUgN7eHsrLXWQFAPJ6vQSDwY1MPg+TGKmCtUlu9z2mxludBtgzvYxlWUYgEGBxcVFlZS61t5+TrSUsqU9aWNWq3bUxB9kGZGJiwjBNE4fDofkP8zLsDpFa0I/huzruCqTvGblsZZ/Ph2HYhIrUULki9/eoppJu3RuJGX/9LJmiq9WkZa/Ys89NThlk0unWTs6cOppbCVvpH1hpOwD9Aui38ffl9DdZAAAAAElFTkSuQmCC"],
+  featehrFall2: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAACXBIWXMAAAsTAAALEwEAmpwYAAACHElEQVRIie2U30tTcRjGnzPmZMwpjIjoInRhO555cFuyMSnIWnVVFlhURBJIF/0DIYOuCrrpl9JtN4PBPI1FRWDOqPQipK1onnSRFkOobBYxImQ75+nCtjWmI/SqHw+88OULn88L7wuvQBLriWFd9H/BPyWYy35F8vlL7HKLtG+yUjCYaW1spKpOjYBkzZqZScO9TeTWVjunesEPp0CxDgTAerOlNvxqehqyq5Nhn4GLb5+QNwJkP8izdXRYliU1Be0eL8MRhQwfJt+/Ji/tIHeDPAPyBNgAcNUZyLLMgYFzOH60F5idh/Y5Dq1jJ/Tu/dBce6AumeFxOVDVNZFIHJIkiaFQiMUULm6mdgUsvBgk06Pkm3HWm0wkWSlQVRU+n68C1hcnWJjsZuGCk/r5TjLcw6gX9Dgd1QKbzcZgMFiGs+PMj7VR/zJR+ovducsO93YWmQpBl9/P4WHlJ/yY+TGR2kK8BN++P8J2j5e/MqVHS0szh4YGl+FPD5mPi9QXHpQ7x2KUZbkCrhA4pTZevXmPXJpkfrSV2scyrCgKJUmqgknCWFzbN2MzkHkEmCwwBuIAtiAajSGTeYdIJAJVVYWV1i0Uj2pfj5/27FM0HDkNwdAFFnKI3lKQy+WQSqVWhEuCk3tFuo1ppK0yns02QcB3kDqSyeSqYClNGx0MbAD7D1YP6HcK169d5r4Dx9YEkyzPYK35Q07aXy74AST9Qnj227T4AAAAAElFTkSuQmCC"],
+  featherLay: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAMAAAAsVwj+AAAAulBMVEUAAAD///81MzpISE6Oj5VdX2lERUnO0dg5PkgZKT4tMzmSoK52eHokKzDV3eIoLzH8///BxK7//9Xw7bH//OaKekj/+en/2Xz/2oH/56n/67rjqjn9u0tpRxr8wnddRCVxRxd1SR7/3Lf/q17OjVH/snX/uYM2LSbTUQBMKRJnTT3YUwp6WUf/UgAiCQAmHBkQAACwsLBdXV1VVVVRUVFGRkY5OTk4ODg1NTUxMTEnJyckJCQjIyP////ibzSGAAAAPnRSTlP/////////////////////////////////////////////////////////////////////////////////ALr7cTYAAAAJcEhZcwAACxMAAAsTAQCanBgAAAB/SURBVCiR7cgxCsIwFIDh/yWvpkVwUwQFB0EcXZxKTh/0AJ5BEDro0EJtjcbBxZ7AxW/8xDNk+MePI5yGcd6uwleEm2TP8hN16O/tuIudGgQWV3kkW2juxM6wvpq7aZ9PjL3EZg3K/ris9ZVStcscIB7goKONFAKgAJTEZASANxjTIN4RoqONAAAAAElFTkSuQmCC"],
+
+  mario_Fly_Standing: [getImage("sm-fly-stand-right.png")],
+  mario_Fly_walking: [getImage("sm-fly-run-right-01.png"), getImage("sm-fly-run-right-02.png"), getImage("sm-fly-run-right-03.png")],
+  mario_Fly_walking2: [getImage("sm-fly-run-right-01.png"), getImage("sm-fly-run-right-02.png"), getImage("sm-fly-run-right-03.png")],
+  mario_Fly_jumping: [getImage("sm-fly-right-01.png"), getImage("sm-fly-right-02.png"), getImage("sm-fly-right-03.png"), getImage("sm-fly-right-04.png"), getImage("sm-fly-right-05.png")],
+  mario_Fly_falling: [getImage("sm-fly-fall-right.png")],
+  mario_Fly_squatting: [getImage("sm-fly-squat-right.png")],
+
+  mario_Fly_Standing_left: [getImage("sm-fly-stand-left.png")],
+  mario_Fly_walking_left: [getImage("sm-fly-run-left-01.png"), getImage("sm-fly-run-left-02.png"), getImage("sm-fly-run-left-03.png")],
+  mario_Fly_walking2_left: [getImage("sm-fly-run-left-01.png"), getImage("sm-fly-run-left-02.png"), getImage("sm-fly-run-left-03.png")],
+  mario_Fly_jumping_left: [getImage("sm-fly-left-01.png"), getImage("sm-fly-left-02.png"), getImage("sm-fly-left-03.png"), getImage("sm-fly-left-04.png"), getImage("sm-fly-left-05.png")],
+  mario_Fly_falling_left: [getImage("sm-fly-fall-left.png")],
+  mario_Fly_squatting_left: [getImage("sm-fly-squat-left.png")],
 
 }
 
@@ -892,7 +1072,9 @@ const fillImageChar = (charCode, textRender, x, y, clampW, clampH) => {
   if (isCharOfType(charCode, sm_halfX)) {
     sx -= tmpCellW - (tmpCellW * 1.5);
   }
-
+  if (isCharOfType(charCode, sm_wide)) {
+    sx -= (tmpCellW);
+  }
   textRender.drawImage(charImages[charIndex], sx, sy, ex - sx, ey - sy);
 
   return true;
