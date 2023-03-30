@@ -8,7 +8,7 @@ cursorEnabled = false;
 w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉ";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
@@ -24,6 +24,8 @@ const sm_halfX = "▫";
 const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
+const sm_tube_UD = "╔╕╚╛";
+const sm_tube_LR = "╞╡";
 const sm_mushroom = "ᘯ";
 const sm_kills = "ᙉ";
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ";
@@ -282,7 +284,8 @@ const findCharsInViewport = (pattern, caseInsensitive, ignoreCombining) => {
 };
 
 function getJSONFromCell(x, y, z, w) {
-  const link = getLink(x, y, z, w) ?.url;
+  const [a, b, c, d] = CorrectLocation(x, y, z, w);
+  const link = getLink(a, b, c, d) ?.url;
   if (!link) {
     return false;
   }
@@ -318,8 +321,8 @@ async function tickAllObjects(list) {
 async function killAllObjects(list) {
   for (const key of Object.keys(list)) {
     const o = list[key];
-if(o.constructor.name !== "Player")
-    await o.die();
+    if (o.constructor.name !== "Player")
+      await o.die();
   }
 
   requestAnimationFrame(() => tickAllObjects(list));
@@ -334,6 +337,18 @@ const countObjectsByClass = (list, className) => {
   }
   return count;
 }
+
+function GoToCoord(x, y) {
+  var maxX = Number.MAX_SAFE_INTEGER / 160 / 4;
+  var maxY = Number.MAX_SAFE_INTEGER / 144 / 4;
+  if (x > maxX || x < -maxX || y > maxY || y < -maxY) {
+    return;
+  }
+  positionX = Math.floor(-x * tileW * coordSizeX);
+  positionY = Math.floor(y * tileH * coordSizeY);
+  w.render();
+}
+
 const deleteObjectsByClass = (list, className) => {
   let count = 0;
   for (const key of Object.keys(list)) {
@@ -565,9 +580,9 @@ class Character {
   die() {
     this.alive = false;
     this.lives = 0;
-if(this.isMain){
-killAllObjects();
-}
+    if (this.isMain) {
+      killAllObjects();
+    }
     this.onDie();
   }
 
@@ -587,9 +602,43 @@ killAllObjects();
         vY = -2.01;
       }
 
+      let [tube, t_char] = DoesCellContainChars([x, y, z, w - 1], sm_tube_UD);
+      if (tube) {
+
+        const TubeData = (getJSONFromCell(x, y, z, w - 1));
+
+        if (TubeData.location) {
+          const [a, b, c, d] = CorrectLocation([x, y, z, w]);
+          writeCharTo(" ", "#000", a, b, c, d);
+          this.location = TubeData.location;
+          if (Math.abs(this.location[0] - TubeData.location[0]) > 10 || Math.abs(this.location[0] - TubeData.location[1]) > 10) {
+            GoToCoord((TubeData.location[0] / 4) * 1, (TubeData.location[1] / 4) * -1);
+          }
+        }
+
+      }
+
+
+
+
+
     }
     if (this.moveLeft && !this.squat) {
+      let [tube, t_char] = DoesCellContainChars([x, y, z - 1, w], sm_tube_LR);
+      if (tube) {
 
+        const TubeData = (getJSONFromCell(x, y, z - 1, w));
+
+        if (TubeData.location) {
+          const [a, b, c, d] = CorrectLocation([x, y, z, w]);
+          writeCharTo(" ", "#000", a, b, c, d);
+          this.location = TubeData.location;
+          if (Math.abs(this.location[0] - TubeData.location[0]) > 10 || Math.abs(this.location[0] - TubeData.location[1]) > 10) {
+            GoToCoord((TubeData.location[0] / 4) * 1, (TubeData.location[1] / 4) * -1);
+          }
+        }
+
+      }
       this.cellRep = this.cellReps.run[this.isFacingLeft ? 'left' : 'right'];
       this.isFacingLeft = true;
 
@@ -601,6 +650,21 @@ killAllObjects();
       vX -= 0.5;
     }
     if (this.moveRight && !this.squat) {
+      let [tube, t_char] = DoesCellContainChars([x, y, z + 1, w], sm_tube_LR);
+      if (tube) {
+
+        const TubeData = (getJSONFromCell(x, y, z + 1, w));
+
+        if (TubeData.location) {
+          const [a, b, c, d] = CorrectLocation([x, y, z, w]);
+          writeCharTo(" ", "#000", a, b, c, d);
+          this.location = TubeData.location;
+          if (Math.abs(this.location[0] - TubeData.location[0]) > 10 || Math.abs(this.location[0] - TubeData.location[1]) > 10) {
+            GoToCoord((TubeData.location[0] / 4) * 1, (TubeData.location[1] / 4) * -1);
+          }
+        }
+
+      }
       this.cellRep = this.cellReps.run[this.isFacingLeft ? 'left' : 'right'];
       this.isFacingLeft = false;
 
@@ -612,6 +676,26 @@ killAllObjects();
       vX += 0.5;
     }
     if (this.squat) {
+
+      const [tube, _] = DoesCellContainChars([x, y, z, w + 1], sm_tube_UD);
+      console.log("squat", tube)
+      if (tube) {
+
+        const TubeData = (getJSONFromCell(x, y, z, w + 1));
+
+        if (TubeData.location) {
+          const [a, b, c, d] = CorrectLocation([x, y, z, w]);
+          writeCharTo(" ", "#000", a, b, c, d);
+
+          this.location = TubeData.location;
+          if (Math.abs(this.location[0] - TubeData.location[0]) > 10 || Math.abs(this.location[0] - TubeData.location[1]) > 10) {
+            GoToCoord((TubeData.location[0] / 4) * 1, (TubeData.location[1] / 4) * -1);
+          }
+        }
+
+      }
+
+
       this.cellRep = this.cellReps.squat[this.isFacingLeft ? 'left' : 'right'];
     }
 
@@ -690,8 +774,8 @@ killAllObjects();
       }
 
       if (checkNearbyCellsForChar(this.location, sm_kills)) {
-this.lives=0;
-this.die();
+        this.lives = 0;
+        this.die();
       }
 
     }
@@ -779,8 +863,7 @@ this.die();
         } else if (RandomBlockData.upgrade == 'mushroom') {
           [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
           const mushroom = new Mushroom(fx, fy, fz, fw);
-        }
-        else if (RandomBlockData.upgrade == 'deathShroom') {
+        } else if (RandomBlockData.upgrade == 'deathShroom') {
           [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
           const deathShroom = new DeathShroom(fx, fy, fz, fw);
         }
@@ -801,9 +884,9 @@ this.die();
           this.onFire();
         }
 
-        if(DoesCellContainChars([x, y, z, w + b], this.blockers)[0]){
-b = 0;
-}
+        if (DoesCellContainChars([x, y, z, w + b], this.blockers)[0]) {
+          b = 0;
+        }
       }
 
 
