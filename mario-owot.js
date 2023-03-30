@@ -645,9 +645,9 @@ class Character {
       // Handle blocked cells to the left
       const [blocked, _] = DoesCellContainChars([x, y, z - 1, w], this.blockers);
       if (!blocked && vX >= 0) {
-        vX -= 0.5;
+        vX -= 1;
       }
-      vX -= 0.5;
+      vX -= 1;
     }
     if (this.moveRight && !this.squat) {
       let [tube, t_char] = DoesCellContainChars([x, y, z + 1, w], sm_tube_LR);
@@ -671,9 +671,9 @@ class Character {
       // Handle blocked cells to the right
       const [blocked, _] = DoesCellContainChars([x, y, z + 1, w], this.blockers);
       if (!blocked && vX === 0) {
-        vX += 0.5;
+        vX += 1;
       }
-      vX += 0.5;
+      vX += 1;
     }
     if (this.squat) {
 
@@ -712,12 +712,7 @@ class Character {
 
         }
       } else if (this.moveRight || this.moveLeft) {
-        if (Math.abs(vX) > 5) {
-          // Handle running
-        } else {
 
-          // Handle walking
-        }
       } else {
         // Handle standing
       }
@@ -745,6 +740,7 @@ class Character {
     if (this.autoMoveLaterially) {
       this.velocity[0] = this.isFacingLeft ? -1 : 1;
     }
+console.log(this.velocity)
   }
 
   //do the actual movement based on velocity
@@ -875,8 +871,10 @@ class Character {
     [isBG, BGchar] = DoesCellContainChars([x, y, z + a, w + b], sm_backGround);
     //later check bchar against coin boxes and flipblocks
     if (DoesCellContainChars([x, y, z + a, w + b], this.blockers)[0] && !isBG || b < 0 && DoesCellContainChars([x, y, z + a, w + b], this.blockers)[0] && !isBG) {
-      a = 0;
 
+    if (DoesCellContainChars([x, y, z + a, w], this.blockers)[0] && !isBG ) {
+      a = 0;
+}
 
       if (shouldthrough && b < 0 || isBG) {} else if (DoesCellContainChars([x, y, z + a, w + 1], sm_backGround)[0]) {} else {
         if (!this.isProjectile && DoesCellContainChars([x, y, z + a, w + 1], sm_hurts_fire)[0] && this.canTakeDamage) {
