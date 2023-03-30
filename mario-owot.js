@@ -645,7 +645,7 @@ class Character {
       // Handle blocked cells to the left
       const [blocked, _] = DoesCellContainChars([x, y, z - 1, w], this.blockers);
       if (!blocked && vX >= 0) {
-        vX = -1;
+        vX -= 0.5;
       }
       vX -= 0.5;
     }
@@ -671,7 +671,7 @@ class Character {
       // Handle blocked cells to the right
       const [blocked, _] = DoesCellContainChars([x, y, z + 1, w], this.blockers);
       if (!blocked && vX === 0) {
-        vX += 1;
+        vX += 0.5;
       }
       vX += 0.5;
     }
@@ -977,7 +977,7 @@ class Character {
     const [x, y, z, w] = this.location;
     let [vX, vY] = this.velocity;
 
-    vX = Lerp(vX, 0, 0.1);
+    vX = Lerp(vX, 0, 1);
     if (!this.isProjectile) {
       this.velocity[0] = vX;
     }
