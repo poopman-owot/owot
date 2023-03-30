@@ -800,7 +800,10 @@ this.die();
 
           this.onFire();
         }
-        b = 0;
+
+        if(DoesCellContainChars([x, y, z, w + b], this.blockers)[0]){
+b = 0;
+}
       }
 
 
