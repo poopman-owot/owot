@@ -8,7 +8,7 @@ cursorEnabled = false;
 w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫[]≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉ";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
@@ -21,10 +21,12 @@ const smSmall = "▫";
 const sm_halfY = "▫▣";
 const sm_random = "▣";
 const sm_halfX = "▫";
-const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚"
+const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ"
 const sm_destructable = "";
-const sm_feather = "࿙࿚‚"
-const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚"
+const sm_feather = "࿙࿚‚";
+const sm_mushroom = "ᘯ";
+const sm_kills = "ᙉ";
+const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ";
 const sm_hurts = "⡀⠂⠁☵";
 const sm_hurts_fire = "⡀⠂⠁☵";
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
@@ -124,6 +126,7 @@ const ScrollWorld = (offset = [0, 0], ...rest) => {
 };
 
 
+
 const SubtractArrays = (arr1, arr2, roundResult = false) => {
   const resultArray = arr1.map((value, index) => {
     let result = value - arr2[index];
@@ -151,6 +154,48 @@ const AddArrays = (arr1, arr2, roundResult = false) => {
 
   return resultArray;
 }
+
+function localWriteChar(tileX, tileY, charX, charY, char, color) {
+  if (!tiles[tileY + "," + tileX]) return;
+  var tile = tiles[tileY + "," + tileX];
+  var content = advancedSplit(tile.content);
+  content[charY * tileC + charX] = char;
+  tile.content = content.join("");
+  if (!color) color = 0;
+  if (!tile.properties.color) tile.properties.color = Object.assign([], blankColor);
+  tile.properties.color[charY * tileC + charX] = color;
+  renderTile(tileX, tileY, true);
+}
+
+function getNearbyCells(coord, str) {
+  const [x, y, z, w] = CorrectLocation(coord);
+  return {
+    centerChar: DoesCellContainChars(CorrectLocation(x, y, z, w), str),
+    rightChar: DoesCellContainChars(CorrectLocation(x, y, z + 1, w), str),
+    leftChar: DoesCellContainChars(CorrectLocation(x, y, z - 1, w), str),
+    bottomChar: DoesCellContainChars(CorrectLocation(x, y, z, w + 1), str),
+    topChar: DoesCellContainChars(CorrectLocation(x, y, z, w - 1), str),
+    rightTopChar: DoesCellContainChars(CorrectLocation(x, y, z + 1, w - 1), str),
+    leftTopChar: DoesCellContainChars(CorrectLocation(x, y, z - 1, w - 1), str),
+    RightBottomChar: DoesCellContainChars(CorrectLocation(x, y, z + 1, w + 1), str),
+    LeftBottomChar: DoesCellContainChars(CorrectLocation(x, y, z - 1, w + 1), str),
+  }
+}
+
+function checkNearbyCellsForChar(coord, str) {
+  const nearbyCells = getNearbyCells(coord, str);
+  for (const key in nearbyCells) {
+    if (nearbyCells[key][0]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const doesNearbyCellsContainChars = (coord, char) => {
+  const matchingCells = findCellsNearbyMatchingChar(coord, char);
+  return Object.keys(matchingCells).length > 0;
+};
 
 function CorrectLocation(...args) {
   let location = Array.isArray(args[0]) ? args[0] : args;
@@ -237,7 +282,11 @@ const findCharsInViewport = (pattern, caseInsensitive, ignoreCombining) => {
 };
 
 function getJSONFromCell(x, y, z, w) {
-  return JSON.parse("{" + getLink(x, y, z, w).url.replace(/.*\/\//g, "") + "}");
+  const link = getLink(x, y, z, w) ?.url;
+  if (!link) {
+    return false;
+  }
+  return JSON.parse("{" + link.replace(/.*\/\//g, "") + "}");
 }
 
 async function getDeltaTime() {
@@ -266,7 +315,15 @@ async function tickAllObjects(list) {
 
   requestAnimationFrame(() => tickAllObjects(list));
 }
+async function killAllObjects(list) {
+  for (const key of Object.keys(list)) {
+    const o = list[key];
+if(o.constructor.name !== "Player")
+    await o.die();
+  }
 
+  requestAnimationFrame(() => tickAllObjects(list));
+}
 const countObjectsByClass = (list, className) => {
   let count = 0;
   for (const key of Object.keys(list)) {
@@ -385,6 +442,25 @@ const featherCellReps = createCellReps({
   },
   dead: " ",
 }, );
+
+const MushroomCellReps = createCellReps({
+  stand: "ᘯ",
+  squat: "ᘯ",
+  run: "ᘯ",
+  jump: "ᘯ",
+  fall: "ᘯ",
+  burned: "ᘯ",
+  dead: " ",
+}, );
+const DeathShroomCellReps = createCellReps({
+  stand: "ᙉ",
+  squat: "ᙉ",
+  run: "ᙉ",
+  jump: "ᙉ",
+  fall: "ᙉ",
+  burned: "ᙉ",
+  dead: " ",
+}, );
 class Character {
   constructor(x, y, z, w, id) {
     this.frame = 0;
@@ -409,6 +485,7 @@ class Character {
     this.isMain = false;
     this.isProjectile = false;
     this.isFeather = false;
+    this.isMushroom = false;
     this.imagURL = "";
     this.cellReps = {};
     this.cellRep = [" "];
@@ -417,7 +494,12 @@ class Character {
     this.tickEveryN = 3;
     this.eraseChar = " ";
     this.canTick = true;
+    this.isCollectable = false;
     this.canTakeDamage = true;
+    this.alwaysTakesDamage = false;
+    this.points = 0;
+    this.isBig = false;
+
     characterList[id] = this;
 
     // request animation frame and bind this to the tick function
@@ -428,7 +510,9 @@ class Character {
   onCreated() {
     console.log(`${this.id} created`);
   }
-
+  givePoints(points) {
+    this.points += points;
+  }
   onDie() {
     console.log(`${this.id} died`);
     const [x, y, z, w] = CorrectLocation(this.location);
@@ -481,6 +565,9 @@ class Character {
   die() {
     this.alive = false;
     this.lives = 0;
+if(this.isMain){
+killAllObjects();
+}
     this.onDie();
   }
 
@@ -571,13 +658,48 @@ class Character {
     ];
 
     // Handle projectile movement
-    if (this.isProjectile) {
+    if (this.autoMoveLaterially) {
       this.velocity[0] = this.isFacingLeft ? -1 : 1;
     }
   }
 
   //do the actual movement based on velocity
   move() {
+    if (this.isCollectable) {
+      if (checkNearbyCellsForChar(this.location, marioSpecChars)) {
+        this.lives = 2;
+      }
+    } else if (this.isMain) {
+      if (checkNearbyCellsForChar(this.location, sm_mushroom)) {
+        if (!this.isBig && !this.canFly) {
+          this.isBig = true;
+        } else {
+          this.givePoints(1000);
+        }
+      }
+
+      if (checkNearbyCellsForChar(this.location, sm_feather)) {
+        if (this.isBig && !this.canFly) {
+          this.canFly = true;
+
+        } else if (!this.isBig) {
+          this.isBig = true;
+        } else {
+          this.givePoints(1000);
+        }
+      }
+
+      if (checkNearbyCellsForChar(this.location, sm_kills)) {
+this.lives=0;
+this.die();
+      }
+
+    }
+
+
+    if (this.alwaysTakesDamage) {
+      this.onDamaged();
+    }
     if (this.isMain) {
       if (this.canFly) {
         this.cellReps = marioFlyCellReps;
@@ -641,15 +763,28 @@ class Character {
     if (isRandomBlock && b < 0) {
       let [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b)
       const RandomBlockData = (getJSONFromCell(fx, fy, fz, fw));
-      writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
-      if (RandomBlockData.upgrade == 'feather') {
+      if (RandomBlockData) {
+        writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
+        if (RandomBlockData.upgrade == 'feather') {
 
+          if (this.isBig) {
+            [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
+            const feather = new Feather(fx, fy, fz, fw);
+          } else {
+            //if you arent big, you get a mushroom
+            [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
+            const mushroom = new Mushroom(fx, fy, fz, fw);
+          }
 
-        [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
-        const feather = new Feather(fx, fy, fz, fw);
-
+        } else if (RandomBlockData.upgrade == 'mushroom') {
+          [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
+          const mushroom = new Mushroom(fx, fy, fz, fw);
+        }
+        else if (RandomBlockData.upgrade == 'deathShroom') {
+          [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b - 2)
+          const deathShroom = new DeathShroom(fx, fy, fz, fw);
+        }
       }
-
     }
 
 
@@ -689,39 +824,45 @@ class Character {
       writeCharTo(this.eraseChar, "#000", x1, y1, z1, w1);
     }
     [x, y, z, w] = CorrectLocation(this.location);
-    if (DoesCellContainChars([x, y, z, w], sm_feather)[0]) {
-      if (this.isMain) {
-        this.canFly = true;
 
-      }
-    }
     if (DoesCellContainChars([x, y, z, w], passthrough_erase)[0]) {
       this.eraseChar = " ";
     } else {
       this.eraseChar = getChar(x, y, z, w);
     }
 
-    if (this.isProjectile) {
-      if (this.isFacingLeft) {
-        let [isbg, Char] = DoesCellContainChars([x, y, z - 1, w], sm_backGround);
-        if (!isbg && Char != " ") {
+
+    if (this.isFacingLeft) {
+      let [isbg, Char] = DoesCellContainChars([x, y, z - 1, w], sm_backGround);
+      if (!isbg && Char != " ") {
+        if (this.isProjectile) {
           this.lives = 0;
-
-        }
-      } else {
-        let [isbg, Char] = DoesCellContainChars([x, y, z + 1, w], sm_backGround);
-
-        if (!isbg && Char != " ") {
-          this.lives = 0;
-
+        } else if (this.isMushroom) {
+          this.velocity[0] = -1;
+          this.isFacingLeft = false;
         }
 
+      }
+    } else {
+      let [isbg, Char] = DoesCellContainChars([x, y, z + 1, w], sm_backGround);
+
+      if (!isbg && Char != " ") {
+
+        if (this.isProjectile) {
+          this.lives = 0;
+        } else if (this.isMushroom) {
+          this.velocity[0] = 1;
+          this.isFacingLeft = true;
+        }
 
       }
 
 
-
     }
+
+
+
+
 
 
     if (this.alive) {
@@ -817,8 +958,11 @@ class Fireball extends Character {
     this.id = this.name + "_" + (Object.keys(characterList).length - 1);
     this.isMain = false;
     this.cellReps = fireballCellReps;
+    this.autoMoveLaterially = true;
+    this.alwaysTakesDamage = true;
     this.isProjectile = true;
     this.tickEveryN = 4;
+    this.points = 0;
     this.onCreated();
   }
 }
@@ -832,9 +976,37 @@ class Feather extends Character {
     this.onCreated();
     this.isProjectile = false;
     this.isFeather = true;
+    this.isCollectable = true;
     this.cellReps = featherCellReps;
     this.tickEveryN = 20;
     this.velocity = [0, -2];
+  }
+}
+
+class Mushroom extends Character {
+  constructor(x, y, z, w) {
+    super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+    this.name = "mushroom";
+    this.lives = 50;
+    this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+    this.isMain = false;
+    this.onCreated();
+    this.isProjectile = false;
+    this.isFeather = false;
+    this.isMushroom = true;
+    this.isCollectable = true;
+    this.cellReps = MushroomCellReps;
+    this.alwaysTakesDamage = true;
+    this.autoMoveLaterially = true;
+    this.tickEveryN = 20;
+    this.velocity = [1, 0];
+  }
+}
+class DeathShroom extends Mushroom {
+  constructor(x, y, z, w) {
+    super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+    this.name = "deathShroom";
+    this.cellReps = DeathShroomCellReps;
   }
 }
 var hitTimeout = setTimeout(AllowHits, 1000);
@@ -957,10 +1129,11 @@ setInterval(() => {
 
 setInterval(() => {
   renderTiles(true);
+
 }, 1000);
 //----------------------------------------------------------CellVisual Library
 const imgBase = "https://ik.imagekit.io/poopman/Mario/";
-const imgUpdate = "?updatedAt=1680124723068";
+const imgUpdate = "?updatedAt=1680188363876";
 const getImage = (imgName) => {
   return imgBase + imgName + imgUpdate;
 }
@@ -1026,9 +1199,9 @@ const SMImageSrc = {
   mario_Fly_jumping_left: [getImage("sm-fly-left-01.png"), getImage("sm-fly-left-02.png"), getImage("sm-fly-left-03.png"), getImage("sm-fly-left-04.png"), getImage("sm-fly-left-05.png")],
   mario_Fly_falling_left: [getImage("sm-fly-fall-left.png")],
   mario_Fly_squatting_left: [getImage("sm-fly-squat-left.png")],
-
+  mushroom: [getImage("mushroom_big.png")],
+  deathShroom: [getImage("mushroom_dead.png")],
 }
-
 
 const findImageCharKey = (imageSrcObject, charCode, str = "") => {
   const char = String.fromCharCode(charCode);
