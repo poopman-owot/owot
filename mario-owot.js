@@ -1,14 +1,17 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
 let characterList = {};
 var blockList = {};
-const blockers = "";
+const blockers = ""
+useHighlight = false;
 var globalTickIterator = 0;
-w.input.disabled = true
+w.input.disabled = true;
+defaultURLLinkColor = "transparent";
 cursorEnabled = false;
+cursorRenderingEnabled = false;
 w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
-const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉ";
+const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
+const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨";
 bufferLargeChars = false;
 var charImages = [];
 for (block in superMarioChars) {
@@ -16,19 +19,21 @@ for (block in superMarioChars) {
 }
 
 
-
+const sm_flipblock = "⚌";
 const smSmall = "▫";
-const sm_halfY = "▫▣";
+const sm_halfY = "▫";
 const sm_random = "▣";
 const sm_halfX = "▫";
-const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ"
+const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
 const sm_tube_UD = "╔╕╚╛";
 const sm_tube_LR = "╞╡";
 const sm_mushroom = "ᘯ";
 const sm_kills = "ᙉ";
-const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ";
+const sm_breakable_Brick = "⩨"
+const sm_breakable_Brick_Stacked = "⩩"
+const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛";
 const sm_hurts = "⡀⠂⠁☵";
 const sm_hurts_fire = "⡀⠂⠁☵";
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
@@ -396,6 +401,20 @@ const createCellReps = (data) => {
 
 //--------------------------------------------START CREATE CLASSES ------------------------------------------------------------------------
 
+const marioSmallCellReps = createCellReps({
+  stand: ["ዓ", "የ"],
+  squat: ["ጷ", "ድ"],
+  run: {
+    left: ["ጸ", "ፆ"],
+    right: ["ዩ", "ጱ"]
+  },
+  jump: ["ዾ", "ዼ"],
+  fall: ["ጄ", "ጁ"],
+  burned: ["ዥ", "ዤ"],
+  dead: " ",
+}, );
+
+
 const marioCellReps = createCellReps({
   stand: ["ፃ", "ቶ"],
   squat: ["ዸ", "ደ"],
@@ -408,7 +427,6 @@ const marioCellReps = createCellReps({
   burned: ["ዥ", "ዤ"],
   dead: " ",
 }, );
-
 const marioFlyCellReps = createCellReps({
   stand: ["ፂ", "ጵ"],
   squat: ["ጿ", "ኖ"],
@@ -429,7 +447,7 @@ const fireballCellReps = createCellReps({
   squat: ["⡀", "⠂", "⠁", "⠂"],
   run: ["⡀", "⠂", "⠁", "⠂"],
   jump: ["⡀", "⠂", "⠁", "⠂"],
-  fall: ["⠂"],
+  fall: ["⠂","⠂"],
   burned: ["⡀", "⠂", "⠁", "⠂"],
   dead: " ",
 }, );
@@ -555,7 +573,7 @@ class Character {
     }
     if (this.isMain && this.canFly) {
       this.canFly = false;
-      this.cellReps = marioCellReps;
+     
     }
   }
 
@@ -595,7 +613,7 @@ class Character {
     // Handle movement directions
     if (this.moveUp) {
       this.moveUp = false;
-      if (this.squat) {
+      if (this.squat && this.isBig) {
         vY = -2.1;
         this.superJumped = true;
       } else {
@@ -780,13 +798,7 @@ console.log(this.velocity)
     if (this.alwaysTakesDamage) {
       this.onDamaged();
     }
-    if (this.isMain) {
-      if (this.canFly) {
-        this.cellReps = marioFlyCellReps;
-      } else {
-        this.cellReps = marioCellReps;
-      }
-    }
+
     let [x, y, z, w] = this.location;
     if (DoesCellContainChars([x, y, z + 1, w], sm_hurts_fire)[0]) {
       if (!this.isProjectile && this.canTakeDamage) {
@@ -866,6 +878,50 @@ console.log(this.velocity)
       }
     }
 
+    const [breakableBrick, rbrickBlock] = DoesCellContainChars([x, y, z + a, w + b], sm_breakable_Brick);
+    if (breakableBrick && b < 0) {
+      let [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b)
+      if(this.isMain && this.isBig){  
+setTimeout(function(){
+writeCharTo("⠛", "#000", fx, fy, fz, fw);
+setTimeout(function(){
+writeCharTo(" ", "#000", fx, fy, fz, fw);
+
+},100);
+
+},100);
+}
+    }
+
+    const [breakableBrickStacked, rbrickBlockStacked] = DoesCellContainChars([x, y, z + a, w + b], sm_breakable_Brick_Stacked);
+    if (breakableBrick && b < 0) {
+      let [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b)
+      if(this.isMain && this.isBig){  
+setTimeout(function(){
+writeCharTo("⣿", "#000", fx, fy, fz, fw);
+setTimeout(function(){
+writeCharTo("⩨", "#000", fx, fy, fz, fw);
+
+},100);
+
+},100);
+}
+    }
+
+    const [flipblock, rflipblocks] = DoesCellContainChars([x, y, z + a, w + b], sm_flipblock);
+    if (flipblock && b < 0) {
+      let [fx, fy, fz, fw] = CorrectLocation(x, y, z + a, w + b)
+      if(this.isMain){  
+setTimeout(function(){
+writeCharTo("⚊", "#000", fx, fy, fz, fw);
+setTimeout(function(){
+writeCharTo("⚌", "#000", fx, fy, fz, fw);
+
+},2000);
+
+},100);
+}
+    }
 
     let [shouldthrough, bchar] = DoesCellContainChars([x, y, z + a, w + b], sm_jumpThrough);
     [isBG, BGchar] = DoesCellContainChars([x, y, z + a, w + b], sm_backGround);
@@ -962,15 +1018,36 @@ console.log(this.velocity)
       }
 
 
-
-      writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);
+if(CycleImage(this.cellRep) == "" || CycleImage(this.cellRep) == null || CycleImage(this.cellRep) == undefined){
+writeCharTo(" ", "#000", x, y, z, w);
+}
+else{ writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);}
+      
     }
     if (this.isProjectile) {
 
       this.onDamaged();
     }
   }
+  setReps(){
+if(this.isMain){
 
+if(this.canFly){
+console.log("canfly")
+this.cellReps = marioFlyCellReps;
+}
+else if(this.isBig){
+console.log("isbig")
+this.cellReps = marioCellReps;
+}
+else{
+console.log("issmall")
+this.cellReps = marioSmallCellReps;
+}
+
+}
+
+}
   slowDown() {
     const [x, y, z, w] = this.location;
     let [vX, vY] = this.velocity;
@@ -1000,6 +1077,7 @@ console.log(this.velocity)
     if (this.alive && this.canTick) {
       this.frameSlowdown++;
       if (this.frameSlowdown == this.tickEveryN) {
+        this.setReps();
         this.setVelocity();
         this.move();
         this.slowDown();
@@ -1029,7 +1107,7 @@ class Player extends Character {
     this.id = name + "_" + (Object.keys(characterList).length - 1);
     this.big = false;
     this.isMain = true;
-    this.cellReps = marioCellReps;
+    this.cellReps = marioSmallCellReps;
     this.onCreated();
   }
 }
@@ -1217,7 +1295,7 @@ setInterval(() => {
 }, 1000);
 //----------------------------------------------------------CellVisual Library
 const imgBase = "https://ik.imagekit.io/poopman/Mario/";
-const imgUpdate = "?updatedAt=1680188363876";
+const imgUpdate = "?updatedAt=1680267672646";
 const getImage = (imgName) => {
   return imgBase + imgName + imgUpdate;
 }
@@ -1247,7 +1325,7 @@ const SMImageSrc = {
   bush_top: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAkUlEQVRIie2RwQ2DMAxFHygrMQbihNRFMgVD9FqJEyv0ykAc3UNDGsAJkXr1k74U82THKGAYhpFHQqp8cxLgQzXVeRflLvqkZULCkKx3Ue6iA9bTygXvouzQufGtKtP6zrMhat4I/vp9eY6/2iMNW+HJ1uNty2uM5+ExA1AekKA1l39ByWH9kOoNcrT/NNuALx/C+mNTTrW8aAAAAABJRU5ErkJggg=="],
   bush_left: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAj0lEQVRIie2RwQ2AIAxFv8YLMziHYzAOU7iVuzBDj/VAECigwMkDP2lCKK/9LcDU1NTUX7QMMBzzPQUcaKKbE9iaYQ/qNNFSwMEePFo7+jBgXGBQOUo74GRO/d61PoKwbImwK5U9kw7CvFFXS/ScZZG1bu4blgU4y0ZQCQbCCOk/N36VdNANewfFxY05GNANeikr/DzWeKcAAAAASUVORK5CYII="],
   bush_right: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAAsElEQVRIie2SsQ2EMAxFf1BWyhiI6qRbhCmyyElXITa49gaiDAU4crCdQJ8npSDmf778ATqdTscmnecW7iIE5vMpirmKz2ISjmwakVomPotJGAD8W9/lBiQO90WcQRU/MtuQ1PNDwpwbMVvx1kCkMBY6VNNxk6Mlkchha/w01MgqEgGAqyfgjPp1OwFPQVCaaOxg+bzKiwCzWmFAYmFiUBhw0fT+lm9el6ktkURCXGEHvPM3p05u5YMAAAAASUVORK5CYII="],
-  lucky_block: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA2klEQVQ4jZ2TLRLDIBCFv2QikEgkMseorKzsUXqEHiUysrKyR0BGIiPXpaID3aTQv28GRJb3eDthG54s/EaTN2CJs+TKPO7eKsfLxGmIAE2jxTb2mH6qCiV4pptbmXSpmMQ6yRZjDRLIJgBtLn4QA8RZXhJ2UO7ZWbMS1ugA7OGKhB6jRN/S6gQSPBJ8vjUtnSrVVwk+kdrZiqsGEvyqnZLwrcH2j5hC9ERb/PoD2UA/DgkeZ01e+nZ9Dh6zsJyPjsO+3ueW8fJ4TKchPofpfHR1RQE9TIm/xvkOSc5h/eU3f7EAAAAASUVORK5CYII=", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwElEQVQ4jZ2TIRKEIBSGPxyD0Wg0eoyNG40exSN4jI1Go3HjHoFoJBppbnBABpGV/WYgPPh/3gOe4GAjDWEnYFOrtivr9Igqp3mhHxWAEK64VE1QUDTLKTZ0Ff2oyEwgJlarPg1DFlR54hgZnGsOpQxQlYUdhhygbN8QKEHLmsLZfDsD30TLGiD9Du4QNDAn+rHQHdzOwH/OZIMrrMHyqaIbr0rIYf/b7bP+aSJf+/o0H//ENtPQxcU+bjMZ/mrnL6cxXfdRdugSAAAAAElFTkSuQmCC", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxklEQVQ4jZ2TIRLDIBBFP0wFEomM7BEqe4TKHCVHyDEqIyMjK3sEJBKJxKWiw2aHFEL6ZsIw2f1/WJYV2FhxDkELgNWHSJEw36vKeXEYJg8AQnCx0QrRdlWxujoAwNgbDJOH5EEfIiWUxD5E8NPKPKlkksQ5EjiuuYYEAP14NSUbregrnoAHc6LtdpdMd5Ccj7qQQwbc/ZcJ/8f3ZFBrXw7P3bXxLBL4Pk37vDWLeAkXHnBv02QwL1sJNExj3yZO8GFK/DXOH/LaTf2eFY5BAAAAAElFTkSuQmCC", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAz0lEQVQ4jZ2TLRLDIBCFH5kIJBKJ7BEqIyMje4QeoUfoMSorkZGVOUIlEomMS0UKgYQtSd9MMpOw7wP2h2HRhGNi4QVgsm4MK043P526N7g9LQAwFpul4CFofKus2QwygVTxonVjePjJZAHqbJPvKhv1hVGQDcDpBlLw5AprUbAKAET3Ku5EqfYniKsAzAmlErkBrI0AXQUSUDJS/wPAX4HvPLoXWcbDgMdV7Uqc70SvGpjbsmsVulbBDOVddb/0RBim+0XmownFw+T11zh/AJRgTcUm7oXjAAAAAElFTkSuQmCC"],
+  lucky_block: [getImage("q-block-upper-01.png"),getImage("q-block-upper-02.png"),getImage("q-block-upper-03.png"),getImage("q-block-upper-04.png")],
   mario_Standing: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB10lEQVRIie1VLZejMBS99KwYWbmOjMMt49YN+w8Yh2TcOIKbfxHq1i0SV+pWpr9gI3FTXGXr6t6KkBRI6On4eefknJePe3Nv8gLAVwS3JlOA5mPtDOMlMMBtwvXAbwBvOn2R1YTkmw9sgLvjCT/eP8DwBPwV2MWvty0Y8O540v2uXvY3V58CRAmnNsoJ2sI97Qpuo/yzYAKA1ZI+4gXoQrqNcq8F4gWRkpaZeKHbhXR/mBv6k1gRL6g6tq6E/MWvTEkSWWiJrhbq7VVbtdFJtwfxAqi3ICWBbu8QBsbCGExK6jxOILIQ/Hs6AVXHFmXTB+ODoIHIVXE7AmMhmINISatkCTxWYHE+yUvyAfctBPump8foDACoh1J+zkK7YAx2wpQzJZxMdYosJLqQbeMrdMBtlFsCSrgD9pE4pWxe4r1hCVQsrGdD8qh+ocrZBFDlbHIONmGxIACIVYk8ygH4D5HXBwQPgf8WWLqGgkCtSjsWd/9wHnLZKGx+VhNFzieNpWuc0j9IsviG82tM7pTFgli6tn1DUmcSLF3j0J5wUOUE4ygYh2zU5xQYFUuL57t7FRRRNR9C2fQQWYhSgeabOoVUNr1DQB1H2fSgjgOzv5XvYSxa8OH+A3giJfxDtu6SAAAAAElFTkSuQmCC"],
   mario_walking: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB10lEQVRIie1VLZejMBS99KwYWbmOjMMt49YN+w8Yh2TcOIKbfxHq1i0SV+pWpr9gI3FTXGXr6t6KkBRI6On4eefknJePe3Nv8gLAVwS3JlOA5mPtDOMlMMBtwvXAbwBvOn2R1YTkmw9sgLvjCT/eP8DwBPwV2MWvty0Y8O540v2uXvY3V58CRAmnNsoJ2sI97Qpuo/yzYAKA1ZI+4gXoQrqNcq8F4gWRkpaZeKHbhXR/mBv6k1gRL6g6tq6E/MWvTEkSWWiJrhbq7VVbtdFJtwfxAqi3ICWBbu8QBsbCGExK6jxOILIQ/Hs6AVXHFmXTB+ODoIHIVXE7AmMhmINISatkCTxWYHE+yUvyAfctBPump8foDACoh1J+zkK7YAx2wpQzJZxMdYosJLqQbeMrdMBtlFsCSrgD9pE4pWxe4r1hCVQsrGdD8qh+ocrZBFDlbHIONmGxIACIVYk8ygH4D5HXBwQPgf8WWLqGgkCtSjsWd/9wHnLZKGx+VhNFzieNpWuc0j9IsviG82tM7pTFgli6tn1DUmcSLF3j0J5wUOUE4ygYh2zU5xQYFUuL57t7FRRRNR9C2fQQWYhSgeabOoVUNr1DQB1H2fSgjgOzv5XvYSxa8OH+A3giJfxDtu6SAAAAAElFTkSuQmCC", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACFElEQVRIie1UIXecQBD+SCoiT8ZBHS7U1YX8gnIOV+rqWFxdiatb4iJP4g5cq0pkVVZE4MKpIiKIQ+S9qVh2DxbuXuI77+1jZna/b79Zdhb4b9axyQAgM1cYmEUCBdz6TCZuAXyV7rrKJiTvlsAKWLYdLr49wsEH4CdH6X05XoICl20n43pzuD5TfQAQ+YwKNyLIEl4z9uDCjd4KJgA4OaSPWAzqSY6Rv1gCsZhIVJqZWCxHTzIe5oZ4YifEYsraYi4hWi8rExXx0NZE+xI227227EY69R2IxcBmCxIVUN/NCC1VwhhMopK+54OHNth5MAFlbYEk31njg6CBaK7iuFmqBMsEkai0kkPgsQKNW5K8JH3Cokw1UeRGAIDNcJUvQxsAZuAJwbiJsvP9H3kvrgAA7OwCnkiW29kEs00j/ciR4HaNsu2QhZf4VKdzNaoXeGgT9TQbPLR1o6X1vc4BC+/BIbu+/YwqF/jteFrZxAKAAvkX5rv3RGl9r3d3PK4vnlYgPA4nWKEEgNEOz2mB60bo+OrH9JHRBI1ILICTE6xQuin80HtVabqZxrIAoMqF/irfMAKAUxV892v8efqIru7R1T1W7hmahxZN0cncS6fjx3yH1dNf/Hp4TnUz8eG23dRstlUjEsvxOMVupnNJvgMw6kZFYCwY3zrioa2B5hlY5gRJJZNzMdcAsGbdONNvqDBz/wDwC2D5fQwJIAAAAABJRU5ErkJggg==", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB/UlEQVRIie2UIZfaQBSFv3DWF4lLcHFlXR3wCxZcZOrqMrjKrKvLrKuMxBFcZXB1RMYBDpk63KsYMiQQ6NZU9Z0zybxJ7s29b14G/ofz6OEM5Hotu8J0EtTA1USZhe/AFzOd57pF8tQFroHrY8XHrzs8nuFHwnr0+bGFGrw+ViYv0/v+rtXPQGSiJPNDwVh4z7iAMz/8W7AA9O7pExUhJzGjMe+0ICoSKXLLLCoy4yQmPz87563oiYpEH7NbCeG8W1mRSxK4luhiIV1dtOk3Myk3iIogXSFFDuXmhtCpLTTBUuRmPpqQBC5qMGuB9DFjsTw4zULImehWxeNwagvONUiK3Cq5B7aXuvcz6JTclN6MxfLgODOQ0A87Aem5lceBa9dUukeHnr3bn+ll0G+Bh5ULo4Rd/wBHk+9+KguuwxLowWUbh8UUTYUOxkzpo5YbNBXTbykv14WYgYwD17Lq0ANgszwAMCq3ABT+s80/xDNbA5LAFTnJzUgCV+Jya/O43NrcGyUdnfjOGH7SRL6mbufeYnlwatm2HqHHr9hs2eu+4HVfAJAGOZGvUbH9T8R2YtLYqrUfAzAJRnatBtexONfoqQl+K81Z6PnmpXxZ/NHSzaEKsM+qh6D664BjCVQ8h1i3lOyLRfvg9F1pgA1D00KT+YEA6Xqnfcr+y/gNVd0x+2BIzPQAAAAASUVORK5CYII=", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACFElEQVRIie1UIXecQBD+SCoiT8ZBHS7U1YX8gnIOV+rqWFxdiatb4iJP4g5cq0pkVVZE4MKpIiKIQ+S9qVh2DxbuXuI77+1jZna/b79Zdhb4b9axyQAgM1cYmEUCBdz6TCZuAXyV7rrKJiTvlsAKWLYdLr49wsEH4CdH6X05XoICl20n43pzuD5TfQAQ+YwKNyLIEl4z9uDCjd4KJgA4OaSPWAzqSY6Rv1gCsZhIVJqZWCxHTzIe5oZ4YifEYsraYi4hWi8rExXx0NZE+xI227227EY69R2IxcBmCxIVUN/NCC1VwhhMopK+54OHNth5MAFlbYEk31njg6CBaK7iuFmqBMsEkai0kkPgsQKNW5K8JH3Cokw1UeRGAIDNcJUvQxsAZuAJwbiJsvP9H3kvrgAA7OwCnkiW29kEs00j/ciR4HaNsu2QhZf4VKdzNaoXeGgT9TQbPLR1o6X1vc4BC+/BIbu+/YwqF/jteFrZxAKAAvkX5rv3RGl9r3d3PK4vnlYgPA4nWKEEgNEOz2mB60bo+OrH9JHRBI1ILICTE6xQuin80HtVabqZxrIAoMqF/irfMAKAUxV892v8efqIru7R1T1W7hmahxZN0cncS6fjx3yH1dNf/Hp4TnUz8eG23dRstlUjEsvxOMVupnNJvgMw6kZFYCwY3zrioa2B5hlY5gRJJZNzMdcAsGbdONNvqDBz/wDwC2D5fQwJIAAAAABJRU5ErkJggg=="],
   mario_walking2: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB10lEQVRIie1VLZejMBS99KwYWbmOjMMt49YN+w8Yh2TcOIKbfxHq1i0SV+pWpr9gI3FTXGXr6t6KkBRI6On4eefknJePe3Nv8gLAVwS3JlOA5mPtDOMlMMBtwvXAbwBvOn2R1YTkmw9sgLvjCT/eP8DwBPwV2MWvty0Y8O540v2uXvY3V58CRAmnNsoJ2sI97Qpuo/yzYAKA1ZI+4gXoQrqNcq8F4gWRkpaZeKHbhXR/mBv6k1gRL6g6tq6E/MWvTEkSWWiJrhbq7VVbtdFJtwfxAqi3ICWBbu8QBsbCGExK6jxOILIQ/Hs6AVXHFmXTB+ODoIHIVXE7AmMhmINISatkCTxWYHE+yUvyAfctBPump8foDACoh1J+zkK7YAx2wpQzJZxMdYosJLqQbeMrdMBtlFsCSrgD9pE4pWxe4r1hCVQsrGdD8qh+ocrZBFDlbHIONmGxIACIVYk8ygH4D5HXBwQPgf8WWLqGgkCtSjsWd/9wHnLZKGx+VhNFzieNpWuc0j9IsviG82tM7pTFgli6tn1DUmcSLF3j0J5wUOUE4ygYh2zU5xQYFUuL57t7FRRRNR9C2fQQWYhSgeabOoVUNr1DQB1H2fSgjgOzv5XvYSxa8OH+A3giJfxDtu6SAAAAAElFTkSuQmCC", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACFElEQVRIie1UIXecQBD+SCoiT8ZBHS7U1YX8gnIOV+rqWFxdiatb4iJP4g5cq0pkVVZE4MKpIiKIQ+S9qVh2DxbuXuI77+1jZna/b79Zdhb4b9axyQAgM1cYmEUCBdz6TCZuAXyV7rrKJiTvlsAKWLYdLr49wsEH4CdH6X05XoICl20n43pzuD5TfQAQ+YwKNyLIEl4z9uDCjd4KJgA4OaSPWAzqSY6Rv1gCsZhIVJqZWCxHTzIe5oZ4YifEYsraYi4hWi8rExXx0NZE+xI227227EY69R2IxcBmCxIVUN/NCC1VwhhMopK+54OHNth5MAFlbYEk31njg6CBaK7iuFmqBMsEkai0kkPgsQKNW5K8JH3Cokw1UeRGAIDNcJUvQxsAZuAJwbiJsvP9H3kvrgAA7OwCnkiW29kEs00j/ciR4HaNsu2QhZf4VKdzNaoXeGgT9TQbPLR1o6X1vc4BC+/BIbu+/YwqF/jteFrZxAKAAvkX5rv3RGl9r3d3PK4vnlYgPA4nWKEEgNEOz2mB60bo+OrH9JHRBI1ILICTE6xQuin80HtVabqZxrIAoMqF/irfMAKAUxV892v8efqIru7R1T1W7hmahxZN0cncS6fjx3yH1dNf/Hp4TnUz8eG23dRstlUjEsvxOMVupnNJvgMw6kZFYCwY3zrioa2B5hlY5gRJJZNzMdcAsGbdONNvqDBz/wDwC2D5fQwJIAAAAABJRU5ErkJggg==", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAAB/UlEQVRIie2UIZfaQBSFv3DWF4lLcHFlXR3wCxZcZOrqMrjKrKvLrKuMxBFcZXB1RMYBDpk63KsYMiQQ6NZU9Z0zybxJ7s29b14G/ofz6OEM5Hotu8J0EtTA1USZhe/AFzOd57pF8tQFroHrY8XHrzs8nuFHwnr0+bGFGrw+ViYv0/v+rtXPQGSiJPNDwVh4z7iAMz/8W7AA9O7pExUhJzGjMe+0ICoSKXLLLCoy4yQmPz87563oiYpEH7NbCeG8W1mRSxK4luhiIV1dtOk3Myk3iIogXSFFDuXmhtCpLTTBUuRmPpqQBC5qMGuB9DFjsTw4zULImehWxeNwagvONUiK3Cq5B7aXuvcz6JTclN6MxfLgODOQ0A87Aem5lceBa9dUukeHnr3bn+ll0G+Bh5ULo4Rd/wBHk+9+KguuwxLowWUbh8UUTYUOxkzpo5YbNBXTbykv14WYgYwD17Lq0ANgszwAMCq3ABT+s80/xDNbA5LAFTnJzUgCV+Jya/O43NrcGyUdnfjOGH7SRL6mbufeYnlwatm2HqHHr9hs2eu+4HVfAJAGOZGvUbH9T8R2YtLYqrUfAzAJRnatBtexONfoqQl+K81Z6PnmpXxZ/NHSzaEKsM+qh6D664BjCVQ8h1i3lOyLRfvg9F1pgA1D00KT+YEA6Xqnfcr+y/gNVd0x+2BIzPQAAAAASUVORK5CYII=", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAgCAYAAAAbifjMAAACFElEQVRIie1UIXecQBD+SCoiT8ZBHS7U1YX8gnIOV+rqWFxdiatb4iJP4g5cq0pkVVZE4MKpIiKIQ+S9qVh2DxbuXuI77+1jZna/b79Zdhb4b9axyQAgM1cYmEUCBdz6TCZuAXyV7rrKJiTvlsAKWLYdLr49wsEH4CdH6X05XoICl20n43pzuD5TfQAQ+YwKNyLIEl4z9uDCjd4KJgA4OaSPWAzqSY6Rv1gCsZhIVJqZWCxHTzIe5oZ4YifEYsraYi4hWi8rExXx0NZE+xI227227EY69R2IxcBmCxIVUN/NCC1VwhhMopK+54OHNth5MAFlbYEk31njg6CBaK7iuFmqBMsEkai0kkPgsQKNW5K8JH3Cokw1UeRGAIDNcJUvQxsAZuAJwbiJsvP9H3kvrgAA7OwCnkiW29kEs00j/ciR4HaNsu2QhZf4VKdzNaoXeGgT9TQbPLR1o6X1vc4BC+/BIbu+/YwqF/jteFrZxAKAAvkX5rv3RGl9r3d3PK4vnlYgPA4nWKEEgNEOz2mB60bo+OrH9JHRBI1ILICTE6xQuin80HtVabqZxrIAoMqF/irfMAKAUxV892v8efqIru7R1T1W7hmahxZN0cncS6fjx3yH1dNf/Hp4TnUz8eG23dRstlUjEsvxOMVupnNJvgMw6kZFYCwY3zrioa2B5hlY5gRJJZNzMdcAsGbdONNvqDBz/wDwC2D5fQwJIAAAAABJRU5ErkJggg=="],
@@ -1285,6 +1363,31 @@ const SMImageSrc = {
   mario_Fly_squatting_left: [getImage("sm-fly-squat-left.png")],
   mushroom: [getImage("mushroom_big.png")],
   deathShroom: [getImage("mushroom_dead.png")],
+
+  mario_small_Standing: [getImage("sm-small-run-right-01.png")],
+  mario_small_walking: [getImage("sm-small-run-right-01.png")],
+  mario_small_walking2: [getImage("sm-small-run-right-02.png")],
+  mario_small_jumping: [getImage("sm-small-jump-right.png")],
+  mario_small_falling: [getImage("sm-small-fall-right.png")],
+  mario_small_squatting: [getImage("sm-small-squat-right.png")],
+
+  mario_small_Standing_left: [getImage("sm-small-run-left-01.png")],
+  mario_small_walking_left: [getImage("sm-small-run-left-01.png")],
+  mario_small_walking2_left: [getImage("sm-small-run-left-01.png")],
+  mario_small_jumping_left: [getImage("sm-small-jump-left.png")],
+  mario_small_falling_left: [getImage("sm-small-fall-left.png")],
+  mario_small_squatting_left: [getImage("sm-small-squat-left.png")],
+
+  block_blank: [getImage("block-blank.png")],
+  block_blank_stacked: [getImage("block-blank-stacked.png")],
+  brick: [getImage("breakable-brick.png")],
+  block_stacked: [getImage("breakable-brick-stacked.png")],
+  brick_broken:  [getImage("breakable-brick-broken.png")],
+  block_stacked_broken: [getImage("breakable-brick-stacked-broken.png")],
+  flip_block: [getImage("flip-block-01.gif")],
+  flip_block_spinning: [getImage("flip-block-01.gif"),getImage("flip-block-02.gif"),getImage("flip-block-03.gif"),getImage("flip-block-04.gif")],
+  quad: [getImage("block-quad.png")],
+  quad_stacked: [getImage("block-quad-stacked.png")],
 }
 
 const findImageCharKey = (imageSrcObject, charCode, str = "") => {
@@ -1333,7 +1436,6 @@ const fillImageChar = (charCode, textRender, x, y, clampW, clampH) => {
     sx -= (tmpCellW);
   }
   textRender.drawImage(charImages[charIndex], sx, sy, ex - sx, ey - sy);
-
   return true;
 };
 
