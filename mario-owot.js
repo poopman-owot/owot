@@ -1,29 +1,5 @@
-const marioScriptVersion = "v1.28";
-function loadScript(url, callback) {
-  var script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.src = url;
-
-  script.onload = function() {
-    callback();
-  };
-
-  document.head.appendChild(script);
-}
-// Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/mario-image-src.js`, function() {
-  // Load images
-  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/helper-functions.js`, function() {
-    // load sounds
-    //loadScript('path/to/third/library.js', function() {
-      // run init function to start game
-      init();
-   // });
-  });
-});
-
-function init(){
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
+const marioScriptVersion = "v1.28";
 let characterList = {};
 var blockList = {};
 const blockers = ""
@@ -39,6 +15,7 @@ const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴ�
 const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨";
 bufferLargeChars = false;
 var charImages = [];
+
 for (block in superMarioChars) {
   charImages.push(new Image)
 }
@@ -66,6 +43,37 @@ const sm_enemy = "ቶዱዳጰጀደፃይያጶጆዸጵዹጺጴቆኖፂፏ�
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
+
+const CycleImage = (imageArray, index) => {
+  return imageArray[globalTickIterator % imageArray.length];
+};
+function loadScript(url, callback) {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = url;
+
+  script.onload = function() {
+    callback();
+  };
+
+  document.head.appendChild(script);
+}
+// Load helper functions
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/mario-image-src.js`, function() {
+  // Load images
+  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/helper-functions.js`, function() {
+    // load sounds
+    //loadScript('path/to/third/library.js', function() {
+      // run init function to start game
+      init();
+   // });
+  });
+});
+
+function init(){
+
+
+
 const GetPlayer = (id = null) => {
   const player = Object.values(characterList).find((char) => char instanceof Player && (id === null || char.id === id));
   return player || null;
@@ -81,9 +89,7 @@ const canPlayerMove = (frame, velocity) => {
 }
 
 
-const CycleImage = (imageArray, index) => {
-  return imageArray[globalTickIterator % imageArray.length];
-};
+
 
 async function tickAllObjects(list) {
   w.render();
