@@ -13,8 +13,6 @@ const CellToPixelCoords = (...cellCoords) => {
   return [X, Y];
 }
 
-
-
 const PixelToCellCoords = (...pixelCoords) => {
   let [x = 0, y = 0] = Array.isArray(pixelCoords[0]) ? pixelCoords[0] : pixelCoords;
 
