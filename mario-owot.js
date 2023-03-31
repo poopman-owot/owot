@@ -1373,7 +1373,7 @@ const SMImageSrc = {
 
   mario_small_Standing_left: [getImage("sm-small-run-left-01.png")],
   mario_small_walking_left: [getImage("sm-small-run-left-01.png")],
-  mario_small_walking2_left: [getImage("sm-small-run-left-01.png")],
+  mario_small_walking2_left: [getImage("sm-small-run-left-02.png")],
   mario_small_jumping_left: [getImage("sm-small-jump-left.png")],
   mario_small_falling_left: [getImage("sm-small-fall-left.png")],
   mario_small_squatting_left: [getImage("sm-small-squat-left.png")],
