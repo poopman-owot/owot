@@ -1,4 +1,4 @@
-const marioScriptVersion = "v.1.27";
+const marioScriptVersion = "v.1.28";
 function loadScript(url, callback) {
   var script = document.createElement('script');
   script.type = 'text/javascript';
