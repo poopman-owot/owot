@@ -1,4 +1,4 @@
-
+var superMarioChars = "";
 const CellToPixelCoords = (...cellCoords) => {
   const [x = 0, y = 0, z = 0, w = 0] = Array.isArray(cellCoords[0]) ? cellCoords[0] : cellCoords;
 
