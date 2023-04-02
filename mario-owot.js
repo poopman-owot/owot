@@ -12,7 +12,7 @@ cursorRenderingEnabled = false;
 w.setFlushInterval(1)
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-const superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -26,6 +26,7 @@ const smSmall = "▫";
 const sm_halfY = "▫";
 const sm_random = "▣";
 const sm_halfX = "▫";
+const sm_coin = "▫";
 const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
@@ -62,11 +63,13 @@ function loadScript(url, callback) {
 loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/mario-image-src.js`, function() {
   // Load images
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/helper-functions.js`, function() {
+        loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/mario-ui.js`, function() {
     // load sounds
     //loadScript('path/to/third/library.js', function() {
       // run init function to start game
       init();
    // });
+     });
   });
 });
 
@@ -254,6 +257,7 @@ class Character {
     this.canTakeDamage = true;
     this.alwaysTakesDamage = false;
     this.points = 0;
+    this.coins = 0;
     this.isBig = false;
 
     characterList[id] = this;
@@ -268,6 +272,8 @@ class Character {
   }
   givePoints(points) {
     this.points += points;
+
+    
   }
   onDie() {
     console.log(`${this.id} died`);
@@ -484,17 +490,21 @@ class Character {
 
   //do the actual movement based on velocity
   move() {
+
+
+
     if (this.isCollectable) {
       if (checkNearbyCellsForChar(this.location, marioSpecChars)) {
-        this.lives = 2;
+        this.lives = 1;
       }
     } else if (this.isMain) {
       if (checkNearbyCellsForChar(this.location, sm_mushroom)) {
         if (!this.isBig && !this.canFly) {
           this.isBig = true;
         } else {
-          this.givePoints(1000);
+          
         }
+        this.givePoints(1000);
       }
 
       if (checkNearbyCellsForChar(this.location, sm_feather)) {
@@ -504,8 +514,9 @@ class Character {
         } else if (!this.isBig) {
           this.isBig = true;
         } else {
-          this.givePoints(1000);
+          
         }
+      this.givePoints(5000);
       }
 
       if (checkNearbyCellsForChar(this.location, sm_kills)) {
@@ -691,7 +702,9 @@ writeCharTo("⚌", "#000", fx, fy, fz, fw);
     } else {
       this.eraseChar = getChar(x, y, z, w);
     }
-
+      if (DoesCellContainChars([x, y, z, w], sm_coin)[0] && this.isMain) {
+        this.coins += 1;
+      }
 
     if (this.isFacingLeft) {
       let [isbg, Char] = DoesCellContainChars([x, y, z - 1, w], sm_backGround);
@@ -745,6 +758,13 @@ else{ writeCharTo(CycleImage(this.cellRep), "#000", x, y, z, w);}
       this.onDamaged();
     }
   }
+setUI(){
+if(this.isMain){
+document.getElementById("lives").innerHTML = this.lives;
+document.getElementById("points").innerHTML = this.points;
+document.getElementById("coins").innerHTML = this.coins;
+}
+}
   setReps(){
 if(this.isMain){
 
@@ -798,7 +818,7 @@ this.cellReps = marioSmallCellReps;
         this.move();
         this.slowDown();
         this.draw();
-
+        this.setUI();
         this.frameSlowdown = 0
       }
       if (this.isMain && !this.isProjectile) {
