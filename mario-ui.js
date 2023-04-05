@@ -21,15 +21,22 @@ const html = `
       <div id="mario-dead"></div>
     </div>
   </div>
-  <div id="paused-overlay" class="hide">
+  <div id="paused-overlay" class="show">
     <div id="paused-center" class="outline">
       <div id="paused-title">PAUSED</div>
       <p style="font-size: 0.5em; margin-top: 2em;">Press "P" to play or pause.</p>
       <div id="m-options">
         <input type="checkbox" onclick="setMute()" id="m-mute">
-        <label for="m-mute">Mute Sounds</label><br>
+        <label for="m-mute">Mute Sounds</label>
+        <br>
         <input type="checkbox" onclick="setFly()" id="m-fly">
         <label for="m-fly">Fly Around</label>
+        <br>
+        <input type="checkbox" onclick="setFly()" id="m-fire">
+        <label for="m-fly">Shoot Fireballs</label>
+        <br>
+        <input type="checkbox" onclick="setFly()" id="m-inv">
+        <label for="m-fly">Invincibility</label>
       </div>
     </div>
   </div>
