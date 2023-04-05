@@ -32,11 +32,11 @@ const html = `
         <input type="checkbox" onclick="setFly()" id="m-fly">
         <label for="m-fly">Fly Around</label>
         <br>
-        <input type="checkbox" onclick="setFly()" id="m-fire">
-        <label for="m-fly">Shoot Fireballs</label>
+        <input type="checkbox" onclick="setFire()" id="m-fire">
+        <label for="m-fire">Shoot Fireballs</label>
         <br>
-        <input type="checkbox" onclick="setFly()" id="m-inv">
-        <label for="m-fly">Invincibility</label>
+        <input type="checkbox" onclick="setInvincibility()" id="m-inv">
+        <label for="m-inv">Invincibility</label>
       </div>
     </div>
   </div>
