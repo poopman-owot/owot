@@ -1,5 +1,4 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
-const marioScriptVersion = "v1.32";
 let characterList = {};
 var blockList = {};
 var globalTickIterator = 0;
@@ -170,9 +169,9 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 // Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.js`, function() {
   // Load images
-  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@${marioScriptVersion}/helper-functions.js`, function() {
+  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.28/helper-functions.js`, function() {
     loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/mario-ui.js`, function() {
       // load sounds
       //loadScript('path/to/third/library.js', function() {
