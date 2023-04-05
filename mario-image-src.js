@@ -1,5 +1,5 @@
 const imgBase = "https://ik.imagekit.io/poopman/Mario/";
-const imgUpdate = "?updatedAt=1680267672646";
+const imgUpdate = "?updatedAt=1680723084498";
 const getImage = (imgName) => {
   return imgBase + imgName + imgUpdate;
 }
@@ -93,4 +93,5 @@ const SMImageSrc = {
   flip_block_spinning: [getImage("flip-block-01.gif"),getImage("flip-block-02.gif"),getImage("flip-block-03.gif"),getImage("flip-block-04.gif")],
   quad: [getImage("block-quad.png")],
   quad_stacked: [getImage("block-quad-stacked.png")],
+  powerup_flower:[getImage("powerup-flower.png")]
 }
