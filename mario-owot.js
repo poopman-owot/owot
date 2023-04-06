@@ -6,6 +6,7 @@ var globalTickIterator = 0;
 var paused = true;
 var mute = false;
 
+highlight = function(){}//removes the annoying red and yellow highlighting
 function setFire(){}
 useHighlight = false;
 
