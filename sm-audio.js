@@ -27,6 +27,13 @@ music.loop = true;
 music.addEventListener("canplay", function () { }, true);
 document.body.appendChild(music);
 
+var fireball = document.createElement("audio");
+fireball.setAttribute("class", "audio");
+fireball.src = mSrc + "fireball.mp3";
+fireball.loop = false;
+fireball.addEventListener("canplay", function () { }, true);
+document.body.appendChild(fireball);
+
 var jumpSound = document.createElement("audio");
 jumpSound.setAttribute("class", "audio");
 jumpSound.src = mSrc + "jump.mp3";
@@ -168,6 +175,11 @@ function playsound(type) {
         stomp.currentTime = 0;
         stomp.play()
     }
+    if (type == "dud") {
+        dudSound.pause();
+        dudSound.currentTime = 0;
+        dudSound.play()
+    }
     if (type == "jump") {
         jumpSound.pause();
         jumpSound.currentTime = 0;
@@ -232,6 +244,11 @@ function playsound(type) {
         breakSound.pause();
         breakSound.currentTime = 0;
         breakSound.play()
+    }
+    if (type == "fireball") {
+        fireball.pause();
+        fireball.currentTime = 0;
+        fireball.play()
     }
     
 }
