@@ -702,6 +702,9 @@ if(!this.invincible)
 
       // if the character is moving up
       if (this.moveUp && (this.jumpFrames > 0)) {
+			if(this.jumpFrames == 3 && !this.canFly){playsound("jump");}else if(this.canFly && this.jumpFrames == 3){
+playsound("fly")
+}
         this.jumped = true;
         this.jumpFrames--;
 
@@ -862,6 +865,13 @@ if(!this.invincible)
       }
 
       this.velocity = [vX, vY];
+ if (blockedDirections.up) {
+if(this.moveUp){
+playsound("dud");
+}
+}
+
+
       //handle auto moving objects
       if (this.autoMoveLaterially) {
         if (blockedDirections.right && !this.isFacingLeft) {
@@ -875,10 +885,14 @@ if(!this.invincible)
 
         if (blockedDirections.down) {
           this.jumpFrames = this.squat && this.isBig ? 10 : 3;
+if(this.moveUp){
+playsound("jump")
+}
         }
       } else if (!this.jumped) {
         if (blockedDirections.down) {
           this.jumpFrames = this.squat && this.isBig ? 10 : 3;
+
         }
       }
       if(this.squat){
