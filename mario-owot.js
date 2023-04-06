@@ -391,10 +391,12 @@ if(!paused)
       if (RandomBlockData.replacement) {
         writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
       }
-      else{
-writeCharTo("□", "#000", fx, fy, fz, fw);
-}
       if (RandomBlockData.upgrade) {
+
+      if (!RandomBlockData.replacement) {
+        writeCharTo("□", "#000", fx, fy, fz, fw);
+      }
+
         if (RandomBlockData.upgrade == 'feather') {
 
           if (character.isBig) {
@@ -470,9 +472,6 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
       }
     }
-    else {
-writeCharTo("□", "#000", fx, fy, fz, fw);
-}
     
   }
 
