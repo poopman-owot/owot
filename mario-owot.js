@@ -212,7 +212,7 @@ loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.28/helper-functions.js`, function() {
     loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.34/mario-ui.js`, function() {
       // load sounds
-      loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/sm-audio.js`, function() {
+      loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.35/sm-audio.js`, function() {
       // run init function to start game
       init();
        });
