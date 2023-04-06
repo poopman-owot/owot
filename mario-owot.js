@@ -1,8 +1,12 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
 let characterList = {};
+var player = null;
 var blockList = {};
 var globalTickIterator = 0;
+var paused = true;
+var mute = false;
 
+function setFire(){}
 useHighlight = false;
 
 w.input.disabled = true;
@@ -58,7 +62,37 @@ function greaterOfTwoNumbers(a, b) {
 const CycleImage = (imageArray, index) => {
   return imageArray[globalTickIterator % imageArray.length];
 };
+var muteCB = document.getElementById("m-mute");
+var flyCB = document.getElementById("m-fly");
+var fireCB = document.getElementById("m-fire");
+var invCB = document.getElementById("m-inv");
 
+function setMute(value = muteCB.checked){
+muteCB.checked = value;
+mute = value;
+}
+function setFly(value = flyCB.checked){
+flyCB.checked = value;
+player.canFly = value;
+}
+function setFire(value = fireCB.checked){
+fireCB.checked = value;
+player.flowerPower = value;
+}
+
+function setInvincibility(value = invCB.checked){
+invCB.checked = value;
+player.invincible = value;
+}
+
+function updateCBValues(){
+muteCB = document.getElementById("m-mute");
+flyCB = document.getElementById("m-fly");
+fireCB = document.getElementById("m-fire");
+invCB = document.getElementById("m-inv");
+setFly(player.canFly);
+setFire(player.flowerPower);
+}
 function getNearbyCells2(coord, str) {
   const [x, y, z, w] = CorrectLocation(coord);
   const cL = CorrectLocation(x, y, z, w);
@@ -128,6 +162,10 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     if (DoesCellContainChars([a, b, c, d], sm_mushroom)[0]) {
       bgColor = 16744833; //pink
       characterObject.collideWith("mushroom", [a, b, c, d]);
+    }    
+    if (DoesCellContainChars([a, b, c, d], sm_flower)[0]) {
+      bgColor = 16744833; //pink
+      characterObject.collideWith("flower", [a, b, c, d]);
     }
     if (DoesCellContainChars([a, b, c, d], sm_kills)[0]) {
       bgColor = 0; //pink
@@ -172,12 +210,12 @@ function loadScript(url, callback) {
 loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.js`, function() {
   // Load images
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.28/helper-functions.js`, function() {
-    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/mario-ui.js`, function() {
+    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.34/mario-ui.js`, function() {
       // load sounds
-      //loadScript('path/to/third/library.js', function() {
+      loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/sm-audio.js`, function() {
       // run init function to start game
       init();
-      // });
+       });
     });
   });
 });
@@ -204,7 +242,8 @@ function init() {
 
 
   async function tickAllObjects(list) {
-    w.render();
+if(!paused)
+{    w.render();
     if (countObjectsByClass(characterList, "Fireball") == 0) {
       player.canFire = true;
     }
@@ -217,6 +256,7 @@ function init() {
       await o.tick();
     }
 
+}
     requestAnimationFrame(() => tickAllObjects(list));
   }
   async function killAllObjects(list) {
@@ -351,12 +391,16 @@ function init() {
       if (RandomBlockData.replacement) {
         writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
       }
+      else{
+writeCharTo("□", "#000", fx, fy, fz, fw);
+}
       if (RandomBlockData.upgrade) {
         if (RandomBlockData.upgrade == 'feather') {
 
           if (character.isBig) {
 
             const feather = new Feather(fx2, fy2, fz2, fw2);
+            
           } else {
             //if you arent big, you get a mushroom
 
@@ -366,19 +410,33 @@ function init() {
         } else if (RandomBlockData.upgrade == 'mushroom') {
 
           const mushroom = new Mushroom(fx2, fy2, fz2, fw2);
+        } else if (RandomBlockData.upgrade == 'flower') {
+ if (character.isBig) {
+
+            writeCharTo("⸙", "#000", fx2, fy2, fz2, fw2);
+          } else {
+            //if you arent big, you get a mushroom
+
+            const mushroom = new Mushroom(fx2, fy2, fz2, fw2);
+          }
+
+          
         } else if (RandomBlockData.upgrade == 'deathShroom') {
 
           const deathShroom = new DeathShroom(fx2, fy2, fz2, fw2);
         }
+        playsound("appear");
       }
       if(RandomBlockData.coin){
 			writeCharTo("▫", "#000", fx2, fy2, fz2, fw2);
 character.coins += RandomBlockData.coin;
+playsound("coin");
 setTimeout(function(){
 writeCharTo("□", "#000", fx, fy, fz, fw);
 },5000)
 }
       if (RandomBlockData.location) {
+      playsound("enter")
         writeCharTo(" ", 0, x, y, z, w);
         if (Math.abs(character.location[0] - RandomBlockData.location[0]) > 10 || Math.abs(character.location[0] - RandomBlockData.location[1]) > 10 || RandomBlockData.warp) {
           character.center = false;
@@ -391,6 +449,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
               character.destination = RandomBlockData.location;
               character.location = RandomBlockData.location;
               character.center = true;
+              playsound("exit")
             }, 2000);
           }
         } else {
@@ -411,7 +470,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
       }
     }
-    else{
+    else {
 writeCharTo("□", "#000", fx, fy, fz, fw);
 }
     
@@ -425,6 +484,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
   class Character {
     constructor(x, y, z, w, id) {
       this.frame = 0;
+      this.invincible = 0;
       this.frameSlowdown = 0;
       this.lastFrameTimestamp = performance.now();
       this.name = "character";
@@ -439,7 +499,8 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       this.moveUp = false;
       this.moveLeft = false;
       this.moveRight = false;
-      this.canFire = true;
+      this.canFire = false;
+      this.flowerPower = false;
       this.squat = false;
       this.jumped = false;
       this.jumpFrames = 3;
@@ -506,18 +567,28 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       if (this.isMain) {
         if (obj == "mushroom") {
           this.isBig = true;
+          playsound("big");
           writeCharTo(" ", "#000", a, b, c, d);
         } else if (obj == "feather") {
           this.canFly = true;
+          this.isBig = true;
+					playsound("powerup");
+          writeCharTo(" ", "#000", a, b, c, d);
+        }else if (obj == "flower") {
+					playsound("powerup");
+          this.flowerPower = true;
+          this.isBig = true;
           writeCharTo(" ", "#000", a, b, c, d);
         } else if (obj == "coin") {
           this.coins++;
           this.points += 100;
+					playsound("coin");
           writeCharTo(" ", "#000", a, b, c, d);
         } else if (obj == "randomBox") {
           getBlockData(this, loc);
         } else if (obj == "breakableBrick") {
           if (this.isBig) {
+          playsound("break");
             writeCharTo("⠛", "#000", a, b, c, d);
             setTimeout(function() {
               if (getChar(a, b, c, d) == "⠛") {
@@ -539,6 +610,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       } else if (obj == "kill") {
         this.die();
       } else if (obj == "pipe") {
+
         getBlockData(this, loc);
       }
     }
@@ -551,6 +623,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       } else if (this.isFeather) {
 
       } else if (this.isMain) {
+        playsound("gameover")
         confirm("you died");
         location.reload();
       }
@@ -558,19 +631,24 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
     }
 
     onDamaged() {
-      this.lives--;
+if(!this.invincible)
+      {this.lives--;
       if (this.lives <= 0) {
         this.die();
       }
       if (this.isMain) {
+      if(this.canFly || this.isBig){
+			playsound("powerdown")
+}
         this.canFly = false;
         this.isBig = false;
-      }
+        
+      }}
     }
 
 
     onFire() {
-      if (this.canTakeDamage && !this.isProjectile) {
+      if (!this.invincible && this.canTakeDamage && !this.isProjectile) {
         this.onDamaged();
         this.isOnFire = true;
 
@@ -588,7 +666,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       }
     }
     die() {
-      if (this.canTakeDamage) {
+      if (!this.invincible && this.canTakeDamage) {
         this.alive = false;
         this.lives = 0;
         if (this.isMain) {
@@ -970,6 +1048,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
       this.id = name + "_" + (Object.keys(characterList).length - 1);
       this.big = false;
       this.isMain = true;
+      this.canFire = false;
       this.cellReps = marioSmallCellReps;
       this.onCreated();
     }
@@ -1052,11 +1131,12 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
   //--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
   document.addEventListener("keydown", (event) => {
-    const player = GetPlayer();
+    player = GetPlayer();
     const isJumpKey = event.key === "w";
     const isLeftKey = event.key === "a";
     const isDownKey = event.key === "s";
     const isRightKey = event.key === "d";
+    const isPauseKey = event.key === "p";
     const isSpaceKey = event.key === " ";
 
     if (isJumpKey) {
@@ -1087,13 +1167,13 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
             const fireBallEraseChar = getChar(CorrectLocation(a2, b2, c2, d2))
 
-
-            const fireBall = new Fireball(a2, b2, c2, d2);
-
+if (player.flowerPower)
+{            const fireBall = new Fireball(a2, b2, c2, d2);
+playsound("fireball");
             fireBall.eraseChar = fireBallEraseChar;
 
             fireBall.isFacingLeft = isFacingLeft;
-            tempInvincible();
+            tempInvincible();}
           }
 
 
@@ -1112,6 +1192,28 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
 
     }
+if(isPauseKey){
+playsound("pause")
+paused = !paused;
+if(!paused && !muteCB.checked){
+
+playsound("music")
+setMute(false);
+}
+if(paused){
+setMute(true);
+}
+const pauseOverly = document.getElementById("paused-overlay")
+if(pauseOverly.classList[0] == "show") {
+pauseOverly.classList.remove("show")
+pauseOverly.classList.add("hide");
+}
+else{
+pauseOverly.classList.remove("hide")
+pauseOverly.classList.add("show");
+}
+
+}
   });
 
   document.addEventListener("keyup", (event) => {
@@ -1120,7 +1222,7 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
     const isLeftKey = event.key === "a";
     const isDownKey = event.key === "s";
     const isRightKey = event.key === "d";
-
+  
     if (isJumpKey) {
       player.moveUp = false;
       if (player.canFly) {
@@ -1138,7 +1240,8 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 
 
   //--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
-  let player = null;
+
+
 
   function makePlayer() {
     const playerStarts = FindCharsInViewport("[^⛹]", true, true);
@@ -1159,19 +1262,24 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
   }
 
   player = new Player(0, 0, 0, 0, "luigi", marioCellReps);
-
   tickAllObjects(characterList);
 
   setInterval(() => {
-    globalTickIterator++;
+if(!paused){
+    globalTickIterator++;}
+
   }, 100);
 
   setInterval(() => {
-    renderTiles(true);
+if(!paused)
+{    renderTiles(true);}
+updateCBValues();
 
   }, 1000);
   //----------------------------------------------------------CellVisual Library
 
   //just to show grid
-  renderTiles(true)
+  renderTiles(true);
+  setTimeout(function(){paused = true;},101)
+
 }
