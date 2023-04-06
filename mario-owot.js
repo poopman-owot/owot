@@ -5,7 +5,8 @@ var blockList = {};
 var globalTickIterator = 0;
 var paused = true;
 var mute = false;
-
+userZoom = 3
+doZoom(300)
 highlight = function(){}//removes the annoying red and yellow highlighting
 function setFire(){}
 useHighlight = false;
@@ -222,7 +223,7 @@ loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.
 });
 
 function init() {
-
+if (state.userModel.is_member){if(!confirm("You are a member or owner of this world. Playing is dangerous, press OK to play anyways")){location.reload();} }
 
 
   const GetPlayer = (id = null) => {
@@ -589,6 +590,11 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
         } else if (obj == "breakableBrick") {
           if (this.isBig) {
           playsound("break");
+          this.jumpFrames = 0;
+if(this.velocity[1] < 0){
+this.velocity[1] = 0;
+}
+					
             writeCharTo("⠛", "#000", a, b, c, d);
             setTimeout(function() {
               if (getChar(a, b, c, d) == "⠛") {
@@ -868,6 +874,10 @@ playsound("fly")
  if (blockedDirections.up) {
 if(this.moveUp){
 playsound("dud");
+this.jumpFrames = 0;
+if(this.velocity[1] < 0){
+this.velocity[1] = 0;
+}
 }
 }
 
@@ -884,14 +894,14 @@ playsound("dud");
         this.cellRep = this.cellReps.stand[this.isFacingLeft ? 'left' : 'right'];
 
         if (blockedDirections.down) {
-          this.jumpFrames = this.squat && this.isBig ? 10 : 3;
+          this.jumpFrames = this.squat && this.isBig ? 4 : 3;
 if(this.moveUp){
 playsound("jump")
 }
         }
       } else if (!this.jumped) {
         if (blockedDirections.down) {
-          this.jumpFrames = this.squat && this.isBig ? 10 : 3;
+          this.jumpFrames = this.squat && this.isBig ? 4 : 3;
 
         }
       }
