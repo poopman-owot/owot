@@ -1,6 +1,7 @@
 var mSrc = "https://cdn.jsdelivr.net/gh/poopman-owot/owot/sm/"
 var mute = false;
 var gameover = false;
+
 var coinSound = document.createElement("audio");
 coinSound.setAttribute("class", "audio");
 coinSound.src = mSrc + "coin.mp3";
@@ -52,7 +53,7 @@ breakSound.setAttribute("class", "audio");
 breakSound.src = mSrc + "break.mp3"
 breakSound.loop = false;
 breakSound.addEventListener("canplay", function () { }, true);
-document.body.appendChild(kickSound);
+document.body.appendChild(breakSound);
 
 var lifeSound = document.createElement("audio");
 lifeSound.setAttribute("class", "audio");
@@ -80,7 +81,7 @@ becomeBig.setAttribute("class", "audio");
 becomeBig.src = mSrc + "becomeBig.mp3"
 becomeBig.loop = false;
 becomeBig.addEventListener("canplay", function () { }, true);
-document.body.appendChild(powerUpSound);
+document.body.appendChild(becomeBig);
 
 var pauseSound = document.createElement("audio");
 pauseSound.setAttribute("class", "audio");
@@ -94,24 +95,31 @@ dudSound.setAttribute("class", "audio");
 dudSound.src =  mSrc + "dud.mp3"
 dudSound.loop = false;
 dudSound.addEventListener("canplay", function () { }, true);
+document.body.appendChild(dudSound);
 
 var stomp = document.createElement("audio");
 stomp.setAttribute("class", "audio");
 stomp.src =  mSrc + "stomp.mp3"
 stomp.loop = false;
+stomp.addEventListener("canplay", function () { }, true);
+document.body.appendChild(stomp);
 
 var enterPipe = document.createElement("audio");
 enterPipe.setAttribute("class", "audio");
 enterPipe.src =  mSrc + "enter-pipe.mp3"
 enterPipe.loop = false;
+enterPipe.addEventListener("canplay", function () { }, true);
+document.body.appendChild(enterPipe);
+
 
 var exitPipe = document.createElement("audio");
 exitPipe.setAttribute("class", "audio");
 exitPipe.src =  mSrc + "tunnel.mp3"
 exitPipe.loop = false;
+exitPipe.addEventListener("canplay", function () { }, true);
+document.body.appendChild(exitPipe);
 
-dudSound.addEventListener("canplay", function () { }, true);
-document.body.appendChild(pauseSound);
+
 var tubeSound = document.createElement("audio");
 tubeSound.setAttribute("class", "audio");
 tubeSound.src = mSrc + "tunnel.mp3"
@@ -126,12 +134,6 @@ appearSound.loop = false;
 appearSound.addEventListener("canplay", function () { }, true);
 document.body.appendChild(appearSound);
 
-var bigSound = document.createElement("audio");
-appearSound.setAttribute("class", "audio");
-appearSound.src =  mSrc + "becomeBig.mp3" 
-appearSound.loop = false;
-appearSound.addEventListener("canplay", function () { }, true);
-document.body.appendChild(appearSound);
 
 var powerDownSound = document.createElement("audio");
 powerDownSound.setAttribute("class", "audio");
@@ -160,6 +162,11 @@ function playsound(type) {
         music.pause();
         music.currentTime = 0;
         music.play()
+    }
+        if (type == "stomp") {
+        stomp.pause();
+        stomp.currentTime = 0;
+        stomp.play()
     }
     if (type == "jump") {
         jumpSound.pause();
@@ -191,15 +198,25 @@ function playsound(type) {
         pauseSound.currentTime = 0;
         pauseSound.play()
     }
-    if (type == "tube") {
-        tubeSound.pause();
-        tubeSound.currentTime = 0;
-        tubeSound.play()
+    if (type == "enter") {
+        enterPipe.pause();
+        enterPipe.currentTime = 0;
+        enterPipe.play()
+    }
+        if (type == "exit") {
+        exitPipe.pause();
+        exitPipe.currentTime = 0;
+        exitPipe.play()
     }
     if (type == "powerup") {
         powerUpSound.pause();
         powerUpSound.currentTime = 0;
         powerUpSound.play()
+    }
+ if (type == "big") {
+        becomeBig.pause();
+        becomeBig.currentTime = 0;
+        becomeBig.play()
     }
     if (type == "appear") {
         appearSound.pause();
@@ -207,9 +224,14 @@ function playsound(type) {
         appearSound.play()
     }
     if (type == "powerdown") {
-        powerDownSound .pause();
-        powerDownSound .currentTime = 0;
-        powerDownSound .play()
+        powerDownSound.pause();
+        powerDownSound.currentTime = 0;
+        powerDownSound.play()
+    }
+        if (type == "break") {
+        breakSound.pause();
+        breakSound.currentTime = 0;
+        breakSound.play()
     }
     
 }
