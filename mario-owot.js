@@ -192,7 +192,7 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
 
 
   if (drawDebug) {
-    writeCharTo(char, "#000", a, b, c, d, 0, 0, bgColor);
+    broadcastWrite(char, "#000", a, b, c, d, true, true, 0, 0, bgColor);
   }
   return charDetected;
 }
@@ -223,6 +223,176 @@ loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.
 });
 
 function init() {
+function isJsonString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
+function recieveBroadcastWrites(value){
+w.broadcastReceive(value);
+w.on("cmd", function(arr) {
+  if (arr.sender) {
+    if (w.socketChannel !== arr.sender) {
+      if (isJsonString(arr.data)) {
+        const jsonData = JSON.parse(arr.data);
+        if (jsonData.broadcast) {
+          if (Array.isArray(jsonData.broadcast)) {
+            let [tileX, tileY, charX, charY, charColor, char, local, broadcast, noUndo, undoOffset, charBgColor] = jsonData.broadcast;
+            local = true;
+            broadcast = false;
+            broadcastWrite(char, charColor, tileX, tileY, charX, charY, local, broadcast, noUndo, undoOffset, charBgColor);
+          }
+        }
+      }
+    }
+  }
+})
+
+}
+
+
+// place a character
+function broadcastWrite(char, charColor, tileX, tileY, charX, charY, local, broadcast, noUndo, undoOffset, charBgColor) {
+  if (!Tile.get(tileX, tileY)) {
+    Tile.set(tileX, tileY, blankTile());
+  }
+  var tile = Tile.get(tileX, tileY);
+  var isErase = char == "\x08";
+  if (isErase) {
+    char = " ";
+    charColor = 0x000000;
+    charBgColor = -1;
+  }
+  if (charBgColor == null) {
+    charBgColor = -1;
+  }
+
+  var cell_props = tile.properties.cell_props;
+  if (!cell_props) cell_props = {};
+  var color = tile.properties.color;
+  var bgcolor = tile.properties.bgcolor;
+  if (!color) color = new Array(tileArea).fill(0);
+
+  var hasChanged = false;
+  var prevColor = 0;
+  var prevBgColor = -1;
+  var prevChar = "";
+  var prevLink = getLink(tileX, tileY, charX, charY);
+
+  // delete link locally
+  if (cell_props[charY]) {
+    if (cell_props[charY][charX]) {
+      delete cell_props[charY][charX];
+      hasChanged = true;
+    }
+  }
+  // change color locally
+  if (!Permissions.can_color_text(state.userModel, state.worldModel)) {
+    charColor = 0x000000;
+  }
+  if (!Permissions.can_color_cell(state.userModel, state.worldModel)) {
+    charBgColor = -1;
+  }
+
+  // set text color
+  prevColor = color[charY * tileC + charX];
+  color[charY * tileC + charX] = charColor;
+  if (prevColor != charColor) hasChanged = true;
+  tile.properties.color = color; // if the color array doesn't already exist in the tile
+
+  // set cell color
+  if (!bgcolor && charBgColor != -1) {
+    bgcolor = new Array(tileArea).fill(-1);
+    tile.properties.bgcolor = bgcolor;
+  }
+  if (bgcolor) {
+    prevBgColor = bgcolor[charY * tileC + charX];
+    bgcolor[charY * tileC + charX] = charBgColor;
+    if (prevBgColor != charBgColor) hasChanged = true;
+  }
+
+  // update cell properties (link positions)
+  tile.properties.cell_props = cell_props;
+
+  if (!isErase) {
+    currDeco = getCharTextDecorations(char);
+    char = clearCharTextDecorations(char);
+    char = detectCharEmojiCombinations(char) || char;
+    var cBold = textDecorationModes.bold;
+    var cItalic = textDecorationModes.italic;
+    var cUnder = textDecorationModes.under;
+    var cStrike = textDecorationModes.strike;
+    if (currDeco) {
+      cBold = cBold || currDeco.bold;
+      cItalic = cItalic || currDeco.italic;
+      cUnder = cUnder || currDeco.under;
+      cStrike = cStrike || currDeco.strike;
+    }
+    if (char == " ") { // don't let spaces be bold/italic
+      cBold = false;
+      cItalic = false;
+    }
+    char = setCharTextDecorations(char, cBold, cItalic, cUnder, cStrike);
+  }
+
+  // set char locally
+  var con = tile.content;
+  prevChar = con[charY * tileC + charX]
+  con[charY * tileC + charX] = char;
+  if (prevChar != char) hasChanged = true;
+  w.setTileRedraw(tileX, tileY);
+  if (bufferLargeChars) {
+    if (charY == 0) w.setTileRedraw(tileX, tileY - 1);
+    if (charX == tileC - 1) w.setTileRedraw(tileX + 1, tileY);
+    if (charY == 0 && charX == tileC - 1) w.setTileRedraw(tileX + 1, tileY - 1);
+  }
+  if (!local) {
+    if (hasChanged && (!noUndo || noUndo == -1)) {
+      if (noUndo != -1) {
+        undoBuffer.trim();
+      }
+      undoBuffer.push([tileX, tileY, charX, charY, prevChar, prevColor, prevLink, prevBgColor, undoOffset]);
+    }
+  }
+
+  //TEMP
+  if (window.payLoad && window.chunkMax && window.cleanMemory) {
+    return;
+  }
+
+  var editArray = [tileX, tileY, charX, charY, getDate(), char, nextObjId];
+  if (tileFetchOffsetX || tileFetchOffsetY) {
+    editArray[0] += tileFetchOffsetY;
+    editArray[1] += tileFetchOffsetX;
+  }
+
+  var charColorAdded = false;
+  if (charColor && Permissions.can_color_text(state.userModel, state.worldModel)) {
+    editArray.push(charColor);
+    charColorAdded = true;
+  }
+  if (charBgColor != null && charBgColor != -1 && Permissions.can_color_cell(state.userModel, state.worldModel)) {
+    if (!charColorAdded) {
+      editArray.push(0);
+    }
+    editArray.push(charBgColor);
+  }
+
+  tellEdit.push(editArray); // track local changes
+  if (!local) {
+    writeBuffer.push(editArray); // send edits to server
+  }
+  if (broadcast) {
+
+    w.broadcastCommand(`{"broadcast":${JSON.stringify(editArray)}}`, true);
+  }
+  nextObjId++;
+}
+
 if (state.userModel.is_member){if(!confirm("You are a member or owner of this world. Playing is dangerous, press OK to play anyways")){location.reload();} }
 
 
@@ -391,12 +561,14 @@ if(!paused)
     const RandomBlockData = (getJSONFromCell(fx, fy, fz, fw));
     if (RandomBlockData) {
       if (RandomBlockData.replacement) {
-        writeCharTo(RandomBlockData.replacement, "#000", fx, fy, fz, fw);
+
+        broadcastWrite(RandomBlockData.replacement, "#000", fx, fy, fz, fw, true, true);
       }
       if (RandomBlockData.upgrade) {
 
       if (!RandomBlockData.replacement) {
-        writeCharTo("□", "#000", fx, fy, fz, fw);
+        broadcastWrite("□", "#000", fx, fy, fz, fw,true, true);
+
       }
 
         if (RandomBlockData.upgrade == 'feather') {
@@ -417,7 +589,8 @@ if(!paused)
         } else if (RandomBlockData.upgrade == 'flower') {
  if (character.isBig) {
 
-            writeCharTo("⸙", "#000", fx2, fy2, fz2, fw2);
+            broadcastWrite("⸙", "#000", fx2, fy2, fz2, fw2, true, true);
+
           } else {
             //if you arent big, you get a mushroom
 
@@ -432,16 +605,18 @@ if(!paused)
         playsound("appear");
       }
       if(RandomBlockData.coin){
-			writeCharTo("▫", "#000", fx2, fy2, fz2, fw2);
+			broadcastWrite("▫", "#000", fx2, fy2, fz2, fw2, true, true);
+
 character.coins += RandomBlockData.coin;
 playsound("coin");
 setTimeout(function(){
-writeCharTo("□", "#000", fx, fy, fz, fw);
+broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
 },5000)
 }
       if (RandomBlockData.location) {
       playsound("enter")
-        writeCharTo(" ", 0, x, y, z, w);
+        broadcastWrite(" ", 0, x, y, z, w, true, true);
+
         if (Math.abs(character.location[0] - RandomBlockData.location[0]) > 10 || Math.abs(character.location[0] - RandomBlockData.location[1]) > 10 || RandomBlockData.warp) {
           character.center = false;
           if (character.isMain) {
@@ -569,22 +744,23 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
         if (obj == "mushroom") {
           this.isBig = true;
           playsound("big");
-          writeCharTo(" ", "#000", a, b, c, d);
+
+          broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "feather") {
           this.canFly = true;
           this.isBig = true;
 					playsound("powerup");
-          writeCharTo(" ", "#000", a, b, c, d);
+          broadcastWrite(" ", "#000", a, b, c, d, true, true);
         }else if (obj == "flower") {
 					playsound("powerup");
           this.flowerPower = true;
           this.isBig = true;
-          writeCharTo(" ", "#000", a, b, c, d);
+          broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "coin") {
           this.coins++;
           this.points += 100;
 					playsound("coin");
-          writeCharTo(" ", "#000", a, b, c, d);
+          broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "randomBox") {
           getBlockData(this, loc);
         } else if (obj == "breakableBrick") {
@@ -594,11 +770,11 @@ writeCharTo("□", "#000", fx, fy, fz, fw);
 if(this.velocity[1] < 0){
 this.velocity[1] = 0;
 }
-					
-            writeCharTo("⠛", "#000", a, b, c, d);
+
+            broadcastWrite("⠛", "#000", a, b, c, d, true, true);
             setTimeout(function() {
               if (getChar(a, b, c, d) == "⠛") {
-                writeCharTo(" ", "#000", a, b, c, d);
+                broadcastWrite(" ", "#000", a, b, c, d, true, true);
               }
             }, 100)
           }
@@ -606,13 +782,13 @@ this.velocity[1] = 0;
       }
       if (obj == "fire") {
         this.onFire();
-        writeCharTo(" ", "#000", a, b, c, d);
+        broadcastWrite(" ", "#000", a, b, c, d, true, true);
       } else if (obj == "hurt") {
         this.onDamaged();
-        writeCharTo(" ", "#000", a, b, c, d);
+        broadcastWrite(" ", "#000", a, b, c, d, true, true);
       } else if (obj == "lava") {
         this.onFire();
-        //writeCharTo(" ", "#000", a, b, c, d);
+
       } else if (obj == "kill") {
         this.die();
       } else if (obj == "pipe") {
@@ -623,7 +799,7 @@ this.velocity[1] = 0;
     onDie() {
       console.log(`${this.id} died`);
       const [x, y, z, w] = CorrectLocation(this.location);
-      writeCharTo(this.eraseChar, "#000", x, y, z, w);
+      broadcastWrite(this.eraseChar, "#000", x, y, z, w, true, true);
       if (this.isProjectile) {
 
       } else if (this.isFeather) {
@@ -1021,13 +1197,13 @@ playsound("jump")
           this.cellRep = this.cellReps.burned[this.isFacingLeft ? 'left' : 'right'];
         }
 
-
+					
         // draw the character here
-        writeCharTo(this.eraseChar, "#000", a, b, c, d);
+        broadcastWrite(this.eraseChar, "#000", a, b, c, d, true, true);
         this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ? getChar(dx, dy, dz, dw) : " ";
         this.location = [dx, dy, dz, dw];
 
-        writeCharTo(CycleImage(this.cellRep), "#000", dx, dy, dz, dw);
+        broadcastWrite(CycleImage(this.cellRep), "#000", dx, dy, dz, dw, true, true);
 
 
 
@@ -1277,7 +1453,8 @@ pauseOverly.classList.add("show");
 
         if (charInfo.protection === 2) {
           const startLocation = getJSONFromCell(a, b, c, d).start || [0, 0, 1, 1];
-          localWriteChar(a, b, c, d, " ", "#fff");
+          broadcastWrite(" ", "#fff", a, b, c, d, true, true);
+          
           const [x, y, z, w] = startLocation;
           player = new Player(x, y, z, w, "luigi", marioCellReps);
         }
@@ -1304,6 +1481,7 @@ updateCBValues();
 
   //just to show grid
   renderTiles(true);
+recieveBroadcastWrites(true);
   setTimeout(function(){paused = true;},101)
 
 }
