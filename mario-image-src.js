@@ -95,5 +95,5 @@ const SMImageSrc = {
   quad_stacked: [getImage("block-quad-stacked.png")],
   powerup_flower:[getImage("powerup-flower.png")],
 
-  gumba: [getImage("gumba-01.png"), getImage("gumba-02.png"),
+  gumba: [getImage("gumba-01.png"), getImage("gumba-02.png")],
 }
