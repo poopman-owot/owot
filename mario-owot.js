@@ -218,7 +218,7 @@ loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src
   // Load images
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.46/helper-functions.js`, function() {
 
-    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/broadcastWrite.js`, function() {
+    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.48/broadcastWrite.js`, function() {
       loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@vlatest/mario-ui.js`, function() {
         // load sounds
         loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/sm-audio.js`, function() {
@@ -293,7 +293,7 @@ function init() {
       if (spawnData.enemy) {
         if (spawnData.enemy == "gumba") {
           const gumba = new Gumba(x, y, z, w);
-          broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0, bgColor);
+          broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
         }
       }
     }
