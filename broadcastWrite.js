@@ -32,8 +32,9 @@ w.on("cmd", function(arr) {
 
 // place a character
 function broadcastWrite(char, charColor, tileX, tileY, charX, charY, local, broadcast, noUndo, undoOffset, charBgColor) {
+
   if (!Tile.get(tileX, tileY)) {
-    Tile.set(tileX, tileY, blankTile());
+ return;
   }
   var tile = Tile.get(tileX, tileY);
   var isErase = char == "\x08";
