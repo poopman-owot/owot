@@ -4,7 +4,7 @@ let enemyList = {};
 var player = null;
 var blockList = {};
 var globalTickIterator = 0;
-var paused = true;
+var paused = false;
 var mute = false;
 userZoom = 3
 doZoom(300)
@@ -20,7 +20,7 @@ w.setFlushInterval(1)
 
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸ";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -28,13 +28,16 @@ for (block in superMarioChars) {
   charImages.push(new Image)
 }
 
+
 const blockers = ""
 const sm_flipblock = "⚌";
 const smSmall = "▫";
 const sm_halfY = "▫";
 const sm_random = "▣";
 const sm_halfX = "▫";
+const sm_offsetX = "ሸ"
 const sm_coin = "▫";
+const sm_msg_block = "◙";
 const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊⸙"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
@@ -46,17 +49,20 @@ const sm_tube_Right = "╞";
 const sm_tube_Left = "╡";
 const sm_tube_LR = "╞╡";
 const sm_mushroom = "ᘯ";
+const sm_plant = "ሸ";
 const sm_kills = "ᙉ";
 const sm_gumba = "ᴥ";
+const sm_turtle = "⦈⦇";
+const sm_shell = "⯊"
 const sm_Spawn = "❗";
 const sm_breakable_Brick = "⩨"
 const sm_breakable_Brick_Stacked = "⩩"
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛÷ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ⸙";
-const sm_hurts = "⡀⠂⠁☵";
+const sm_hurts = "⡀⠂⠁☵⯋ሸ";
 const sm_hurts_fire = "⡀⠂⠁☵";
 const sm_lava = "☵"
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
-const sm_enemy = "ᴥ"
+const sm_enemy = "ᴥ⦈⦇⯋ሸ"
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`-_"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
@@ -189,6 +195,10 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     bgColor = 255; //green
     characterObject.collideWith("hurt", [a, b, c, d]);
   }
+    if (DoesCellContainChars([a, b, c, d], sm_shell)[0] && this.isEnemy) {
+    bgColor = 255; //green
+    characterObject.collideWith("kill", [a, b, c, d]);
+  }
   if (!characterObject.isMain && !characterObject.isEnemy) {
     if (DoesCellContainChars([a, b, c, d], marioSpecChars)[0]) {
       bgColor = 16744833; //pink
@@ -214,9 +224,9 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 // Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@1.49/mario-image-src.js`, function() {
   // Load images
-  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.46/helper-functions.js`, function() {
+  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.53/helper-functions.js`, function() {
 
     loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.48/broadcastWrite.js`, function() {
       loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@vlatest/mario-ui.js`, function() {
@@ -269,7 +279,9 @@ function init() {
 
       for (const key of Object.keys(list)) {
         const o = list[key];
+        if(o !== null){
         await o.tick();
+}
       }
 
     }
@@ -293,6 +305,14 @@ function init() {
       if (spawnData.enemy) {
         if (spawnData.enemy == "gumba") {
           const gumba = new Gumba(x, y, z, w);
+          broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
+        }
+        if (spawnData.enemy == "turtle") {
+          const turtle = new Turtle(x, y, z, w);
+          broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
+        }
+         if (spawnData.enemy == "plant") {
+          const plant = new Plant(x, y, z, w);
           broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
         }
       }
@@ -422,6 +442,53 @@ function init() {
     dead: " ",
   }, );
 
+  const TurtleCellReps = createCellReps({
+    stand: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    squat: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    run: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    jump: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    fall: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    burned: {
+      left: ["⦈"],
+      right: ["⦇"]
+    },
+    dead: " ",
+  }, );
+  const ShellCellReps = createCellReps({
+    stand: "⯋",
+    squat: "⯋",
+    run: "⯋",
+    jump: "⯋",
+    fall: "⯋",
+    burned: "⯋",
+    dead: " ",
+  }, );
+    const PlantCellReps = createCellReps({
+    stand: "ሸ",
+    squat: "ሸ",
+    run: "ሸ",
+    jump: "ሸ",
+    fall: "ሸ",
+    burned: "ሸ",
+    dead: " ",
+  }, );
+  
+  
   function getBlockData(character, loc) {
     let [fx, fy, fz, fw] = loc;
     const [x, y, z, w] = character.location;
@@ -553,6 +620,8 @@ function init() {
       this.isMain = false;
       this.isProjectile = false;
       this.isFeather = false;
+      this.isTurtle = false;
+      this.isPlant = false;
       this.isMushroom = false;
       this.imagURL = "";
       this.cellReps = {};
@@ -649,12 +718,26 @@ function init() {
           }
         }
       }
+      if (obj == "shell") {
+        const shell = new Shell(a, b, c, d);
+        tempInvincible();
+				playsound("kick");
+        broadcastWrite(" ", "#000", a, b, c, d, true, true);
+        shell.isFacingLeft = this.isFacingLeft;
+        if (this.isFacingLeft) {
+          shell.velocity = [-1, 0];
+        } else {
+          shell.velocity = [1, 0];
+        }
+      }
+
+
       if (obj == "fire") {
         this.onFire();
         broadcastWrite(" ", "#000", a, b, c, d, true, true);
       } else if (obj == "hurt") {
         this.onDamaged();
-        broadcastWrite(" ", "#000", a, b, c, d, true, true);
+
       } else if (obj == "lava") {
         this.onFire();
 
@@ -668,7 +751,19 @@ function init() {
     onDie() {
       console.log(`${this.id} died`);
       const [x, y, z, w] = CorrectLocation(this.location);
+      if (this.isTurtle || this.isShell) {
+
+        this.eraseChar = "⯊";
+      }
+else if(this.isPlant){
+setTimeout(function(){
+const plant = new Plant(x, y, z, w);
+},2000)
+
+}
       broadcastWrite(this.eraseChar, "#000", x, y, z, w, true, true);
+
+
       if (this.isProjectile) {
 
       } else if (this.isFeather) {
@@ -678,17 +773,18 @@ function init() {
         confirm("you died");
         location.reload();
       }
+
       delete characterList[this.id];
     }
 
     onDamaged() {
-      if (!this.invincible &&  this.canTakeDamage) {
+      if (!this.invincible && this.canTakeDamage) {
         this.lives--;
         if (this.lives <= 0) {
           this.die();
         }
         if (this.isMain) {
-        playsound("kick")
+          playsound("kick")
           if (this.canFly || this.isBig) {
 
             playsound("powerdown")
@@ -706,9 +802,9 @@ function init() {
 
 
         }
-if(this.isEnemy){
-playsound("stomp")
-}
+        if (this.isEnemy && !this.alwaysTakesDamage) {
+          playsound("stomp")
+        }
       }
     }
 
@@ -807,7 +903,7 @@ playsound("stomp")
         if (isBreakbleBrick && this.moveUp) {
           this.collideWith("breakableBrick", [ua, ub, uc, ud]);
         }
-        if (isPipeUD && this.isMain && (this.moveUp || this.squat) && this.isMushroom) {
+        if (isPipeUD && this.isMain && (this.moveUp || this.squat)) {
           this.collideWith("pipe", [ua, ub, uc, ud]);
         }
 
@@ -844,6 +940,8 @@ playsound("stomp")
       const isEnemyD = sm_enemy.includes(nearbyCells.bottomChar[0][1]);
       const isplayerU = marioSpecChars.includes(nearbyCells.topChar[0][1]);
 
+      const isShellL = sm_shell.includes(nearbyCells.leftChar[0][1]);
+      const isShellR = sm_shell.includes(nearbyCells.rightChar[0][1]);
 
       // Determine the direction of movement
       const directions = {
@@ -958,6 +1056,9 @@ playsound("stomp")
           this.isFacingLeft = false;
         }
       }
+      if(this.isShell && (blockedDirections.right || blockedDirections.left)){
+playsound("dud");
+}
       if (vX == 0 && vY == 0 && !this.jumped && !this.squat) {
         this.cellRep = this.cellReps.stand[this.isFacingLeft ? 'left' : 'right'];
 
@@ -983,15 +1084,25 @@ playsound("stomp")
       if (this.isMain && (isEnemyL || isEnemyR || isEnemyU)) {
         this.collideWith("hurt", nearbyCells.topChar[1]);
       }
+
+      if (this.isMain && (isShellL)) {
+        this.collideWith("shell", nearbyCells.leftChar[1]);
+      }
+      if (this.isMain && (isShellR)) {
+        this.collideWith("shell", nearbyCells.rightChar[1]);
+      }
+
       if (this.isMain && isEnemyL) {
         this.points += 100;
         vY = -3;
       }
-      if (this.isEnemy && (isplayerU)) {
 
+      if (this.isEnemy && (isplayerU)) {
         this.collideWith("hurt", [x, y, z, w]);
       }
-
+      if (this.isEnemy && (hurtsRightFire || hurtsLeftFire || hurtsTopFire || isShellL || isShellR) ) {
+        this.collideWith("kill", [x, y, z, w]);
+      }
 
       if (!this.isMain && !this.isEnemy) {
         this.onDamaged();
@@ -1085,6 +1196,9 @@ playsound("stomp")
       } else {
         this.velocity[1] = vY;
       }
+      if(this.alwaysTakesDamage){
+this.onDamaged();
+}
     }
     draw() {
       if (this.alive) {
@@ -1254,6 +1368,74 @@ playsound("stomp")
 
     }
   }
+  class Turtle extends Character {
+    constructor(x, y, z, w) {
+      super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+      this.name = "turle";
+      this.lives = 1;
+      this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+      this.isMain = false;
+      this.onCreated();
+      this.isProjectile = false;
+      this.isFeather = false;
+      this.isMushroom = false;
+      this.isCollectable = false;
+      this.cellReps = TurtleCellReps;
+      this.alwaysTakesDamage = false;
+      this.autoMoveLaterially = true;
+      this.tickEveryN = 20;
+      this.velocity = [-1, 0];
+      this.isEnemy = true;
+      this.isTurtle = true;
+      this.isFacingLeft = true;
+
+    }
+  }
+  class Plant extends Character {
+    constructor(x, y, z, w) {
+      super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+      this.name = "plant";
+      this.lives = 9;
+      this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+      this.isMain = false;
+      this.onCreated();
+      this.isProjectile = false;
+      this.isFeather = false;
+      this.isMushroom = false;
+      this.isCollectable = false;
+      this.cellReps = PlantCellReps;
+      this.alwaysTakesDamage = true;
+      this.autoMoveLaterially = false;
+      this.tickEveryN = 20;
+      this.velocity = [0, 0];
+      this.isEnemy = true;
+      this.isTurtle = false;
+	    this.isFacingLeft = false;
+			this.isPlant = true;
+    }
+  }
+  class Shell extends Character {
+    constructor(x, y, z, w) {
+      super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+      this.name = "shell";
+      this.lives = 1;
+      this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+      this.isMain = false;
+      this.onCreated();
+      this.isProjectile = true;
+      this.isFeather = false;
+      this.isMushroom = false;
+      this.isCollectable = false;
+      this.cellReps = ShellCellReps;
+      this.alwaysTakesDamage = false;
+      this.autoMoveLaterially = true;
+      this.tickEveryN = 5;
+      this.isEnemy = true;
+      this.isTurtle = false;
+      this.isShell = true;
+    }
+  }
+
   var hitTimeout = setTimeout(AllowHits, 1000);
 
   function tempInvincible() {
@@ -1377,11 +1559,13 @@ playsound("stomp")
       player.moveRight = false;
     }
   });
-
+      const pauseOverly = document.getElementById("paused-overlay")
+      pauseOverly.classList.remove("show");
+			pauseOverly.classList.add("hide");
 
   //--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
 
-replaceCharWithImage(superMarioChars,sm_halfY,sm_wide);
+  replaceCharWithImage(superMarioChars, sm_halfY, sm_wide,sm_offsetX);
 
   function makePlayer() {
     const playerStarts = FindCharsInViewport("[^⛹]", true, true);
@@ -1426,7 +1610,7 @@ replaceCharWithImage(superMarioChars,sm_halfY,sm_wide);
   renderTiles(true);
   recieveBroadcastWrites(true);
   setTimeout(function() {
-    paused = true;
+    paused = false;
   }, 101)
 
 }
