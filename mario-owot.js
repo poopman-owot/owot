@@ -1,5 +1,6 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
 let characterList = {};
+let enemyList = {};
 var player = null;
 var blockList = {};
 var globalTickIterator = 0;
@@ -7,8 +8,8 @@ var paused = true;
 var mute = false;
 userZoom = 3
 doZoom(300)
-highlight = function(){}//removes the annoying red and yellow highlighting
-function setFire(){}
+highlight = function() {} //removes the annoying red and yellow highlighting
+function setFire() {}
 useHighlight = false;
 
 w.input.disabled = true;
@@ -19,7 +20,7 @@ w.setFlushInterval(1)
 
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -37,11 +38,17 @@ const sm_coin = "▫";
 const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊⸙"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
-const sm_flower = "⸙";//we just added flower src. need to push to git and upgrade verion number to see it.
+const sm_flower = "⸙"; //we just added flower src. need to push to git and upgrade verion number to see it.
 const sm_tube_UD = "╔╕╚╛";
+const sm_tube_Up = "╔╕";
+const sm_tube_Down = "╚╛";
+const sm_tube_Right = "╞";
+const sm_tube_Left = "╡";
 const sm_tube_LR = "╞╡";
 const sm_mushroom = "ᘯ";
 const sm_kills = "ᙉ";
+const sm_gumba = "ᴥ";
+const sm_Spawn = "❗";
 const sm_breakable_Brick = "⩨"
 const sm_breakable_Brick_Stacked = "⩩"
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛÷ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ⸙";
@@ -49,7 +56,7 @@ const sm_hurts = "⡀⠂⠁☵";
 const sm_hurts_fire = "⡀⠂⠁☵";
 const sm_lava = "☵"
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
-const sm_enemy = "ቶዱዳጰጀደፃይያጶጆዸጵዹጺጴቆኖፂፏዶጳቇጿ"
+const sm_enemy = "ᴥ"
 const sm_jumpThrough = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*(){}[]:;<>,.?/\\|'\"~`-_"
 //--------------------------------------------START OF HELPER FUNCTIONS----------------------------------------------------------------------
 
@@ -69,32 +76,35 @@ var flyCB = document.getElementById("m-fly");
 var fireCB = document.getElementById("m-fire");
 var invCB = document.getElementById("m-inv");
 
-function setMute(value = muteCB.checked){
-muteCB.checked = value;
-mute = value;
-}
-function setFly(value = flyCB.checked){
-flyCB.checked = value;
-player.canFly = value;
-}
-function setFire(value = fireCB.checked){
-fireCB.checked = value;
-player.flowerPower = value;
+function setMute(value = muteCB.checked) {
+  muteCB.checked = value;
+  mute = value;
 }
 
-function setInvincibility(value = invCB.checked){
-invCB.checked = value;
-player.invincible = value;
+function setFly(value = flyCB.checked) {
+  flyCB.checked = value;
+  player.canFly = value;
 }
 
-function updateCBValues(){
-muteCB = document.getElementById("m-mute");
-flyCB = document.getElementById("m-fly");
-fireCB = document.getElementById("m-fire");
-invCB = document.getElementById("m-inv");
-setFly(player.canFly);
-setFire(player.flowerPower);
+function setFire(value = fireCB.checked) {
+  fireCB.checked = value;
+  player.flowerPower = value;
 }
+
+function setInvincibility(value = invCB.checked) {
+  invCB.checked = value;
+  player.invincible = value;
+}
+
+function updateCBValues() {
+  muteCB = document.getElementById("m-mute");
+  flyCB = document.getElementById("m-fly");
+  fireCB = document.getElementById("m-fire");
+  invCB = document.getElementById("m-inv");
+  setFly(player.canFly);
+  setFire(player.flowerPower);
+}
+
 function getNearbyCells2(coord, str) {
   const [x, y, z, w] = CorrectLocation(coord);
   const cL = CorrectLocation(x, y, z, w);
@@ -148,10 +158,7 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     charDetected = false;
   }
   if (characterObject.isMain) {
-    if (DoesCellContainChars([a, b, c, d], sm_hurts)[0]) {
-      bgColor = 255; //green
-      characterObject.collideWith("pain", [a, b, c, d]);
-    }
+
     if (DoesCellContainChars([a, b, c, d], sm_hurts_fire)[0]) {
       if (DoesCellContainChars([a, b, c, d], sm_lava)[0]) {
         //for lava, we only get hurt if its directly below us.
@@ -164,7 +171,7 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     if (DoesCellContainChars([a, b, c, d], sm_mushroom)[0]) {
       bgColor = 16744833; //pink
       characterObject.collideWith("mushroom", [a, b, c, d]);
-    }    
+    }
     if (DoesCellContainChars([a, b, c, d], sm_flower)[0]) {
       bgColor = 16744833; //pink
       characterObject.collideWith("flower", [a, b, c, d]);
@@ -178,18 +185,16 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
       characterObject.collideWith("feather", [a, b, c, d]);
     }
   }
-  if (characterObject.isMain == false) {
+  if (DoesCellContainChars([a, b, c, d], sm_hurts + sm_hurts_fire)[0]) {
+    bgColor = 255; //green
+    characterObject.collideWith("hurt", [a, b, c, d]);
+  }
+  if (!characterObject.isMain && !characterObject.isEnemy) {
     if (DoesCellContainChars([a, b, c, d], marioSpecChars)[0]) {
       bgColor = 16744833; //pink
-
       characterObject.collideWith("kill", [a, b, c, d]);
     }
   }
-
-  if (characterObject.isProjectile) {
-
-  }
-
 
   if (drawDebug) {
     broadcastWrite(char, "#000", a, b, c, d, true, true, 0, 0, bgColor);
@@ -209,191 +214,30 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 // Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.32/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src.js`, function() {
   // Load images
-  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.28/helper-functions.js`, function() {
-    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.34/mario-ui.js`, function() {
-      // load sounds
-      loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.35/sm-audio.js`, function() {
-      // run init function to start game
-      init();
-       });
+  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.46/helper-functions.js`, function() {
+
+    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot/broadcastWrite.js`, function() {
+      loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@vlatest/mario-ui.js`, function() {
+        // load sounds
+        loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/sm-audio.js`, function() {
+          // run init function to start game
+          init();
+        });
+      });
     });
   });
 });
 
 function init() {
-function isJsonString(str) {
-  try {
-    JSON.parse(str);
-  } catch (e) {
-    return false;
-  }
-  return true;
-}
 
-function recieveBroadcastWrites(value){
-w.broadcastReceive(value);
-w.on("cmd", function(arr) {
-  if (arr.sender) {
-    if (w.socketChannel !== arr.sender) {
-      if (isJsonString(arr.data)) {
-        const jsonData = JSON.parse(arr.data);
-        if (jsonData.broadcast) {
-          if (Array.isArray(jsonData.broadcast)) {
-            let [tileX, tileY, charX, charY, charColor, char, local, broadcast, noUndo, undoOffset, charBgColor] = jsonData.broadcast;
-            local = true;
-            broadcast = false;
-            broadcastWrite(char, charColor, tileX, tileY, charX, charY, local, broadcast, noUndo, undoOffset, charBgColor);
-          }
-        }
-      }
+
+  if (state.userModel.is_member) {
+    if (!confirm("You are a member or owner of this world. Playing is dangerous, press OK to play anyways")) {
+      location.reload();
     }
   }
-})
-
-}
-
-
-// place a character
-function broadcastWrite(char, charColor, tileX, tileY, charX, charY, local, broadcast, noUndo, undoOffset, charBgColor) {
-  if (!Tile.get(tileX, tileY)) {
-    Tile.set(tileX, tileY, blankTile());
-  }
-  var tile = Tile.get(tileX, tileY);
-  var isErase = char == "\x08";
-  if (isErase) {
-    char = " ";
-    charColor = 0x000000;
-    charBgColor = -1;
-  }
-  if (charBgColor == null) {
-    charBgColor = -1;
-  }
-
-  var cell_props = tile.properties.cell_props;
-  if (!cell_props) cell_props = {};
-  var color = tile.properties.color;
-  var bgcolor = tile.properties.bgcolor;
-  if (!color) color = new Array(tileArea).fill(0);
-
-  var hasChanged = false;
-  var prevColor = 0;
-  var prevBgColor = -1;
-  var prevChar = "";
-  var prevLink = getLink(tileX, tileY, charX, charY);
-
-  // delete link locally
-  if (cell_props[charY]) {
-    if (cell_props[charY][charX]) {
-      delete cell_props[charY][charX];
-      hasChanged = true;
-    }
-  }
-  // change color locally
-  if (!Permissions.can_color_text(state.userModel, state.worldModel)) {
-    charColor = 0x000000;
-  }
-  if (!Permissions.can_color_cell(state.userModel, state.worldModel)) {
-    charBgColor = -1;
-  }
-
-  // set text color
-  prevColor = color[charY * tileC + charX];
-  color[charY * tileC + charX] = charColor;
-  if (prevColor != charColor) hasChanged = true;
-  tile.properties.color = color; // if the color array doesn't already exist in the tile
-
-  // set cell color
-  if (!bgcolor && charBgColor != -1) {
-    bgcolor = new Array(tileArea).fill(-1);
-    tile.properties.bgcolor = bgcolor;
-  }
-  if (bgcolor) {
-    prevBgColor = bgcolor[charY * tileC + charX];
-    bgcolor[charY * tileC + charX] = charBgColor;
-    if (prevBgColor != charBgColor) hasChanged = true;
-  }
-
-  // update cell properties (link positions)
-  tile.properties.cell_props = cell_props;
-
-  if (!isErase) {
-    currDeco = getCharTextDecorations(char);
-    char = clearCharTextDecorations(char);
-    char = detectCharEmojiCombinations(char) || char;
-    var cBold = textDecorationModes.bold;
-    var cItalic = textDecorationModes.italic;
-    var cUnder = textDecorationModes.under;
-    var cStrike = textDecorationModes.strike;
-    if (currDeco) {
-      cBold = cBold || currDeco.bold;
-      cItalic = cItalic || currDeco.italic;
-      cUnder = cUnder || currDeco.under;
-      cStrike = cStrike || currDeco.strike;
-    }
-    if (char == " ") { // don't let spaces be bold/italic
-      cBold = false;
-      cItalic = false;
-    }
-    char = setCharTextDecorations(char, cBold, cItalic, cUnder, cStrike);
-  }
-
-  // set char locally
-  var con = tile.content;
-  prevChar = con[charY * tileC + charX]
-  con[charY * tileC + charX] = char;
-  if (prevChar != char) hasChanged = true;
-  w.setTileRedraw(tileX, tileY);
-  if (bufferLargeChars) {
-    if (charY == 0) w.setTileRedraw(tileX, tileY - 1);
-    if (charX == tileC - 1) w.setTileRedraw(tileX + 1, tileY);
-    if (charY == 0 && charX == tileC - 1) w.setTileRedraw(tileX + 1, tileY - 1);
-  }
-  if (!local) {
-    if (hasChanged && (!noUndo || noUndo == -1)) {
-      if (noUndo != -1) {
-        undoBuffer.trim();
-      }
-      undoBuffer.push([tileX, tileY, charX, charY, prevChar, prevColor, prevLink, prevBgColor, undoOffset]);
-    }
-  }
-
-  //TEMP
-  if (window.payLoad && window.chunkMax && window.cleanMemory) {
-    return;
-  }
-
-  var editArray = [tileX, tileY, charX, charY, getDate(), char, nextObjId];
-  if (tileFetchOffsetX || tileFetchOffsetY) {
-    editArray[0] += tileFetchOffsetY;
-    editArray[1] += tileFetchOffsetX;
-  }
-
-  var charColorAdded = false;
-  if (charColor && Permissions.can_color_text(state.userModel, state.worldModel)) {
-    editArray.push(charColor);
-    charColorAdded = true;
-  }
-  if (charBgColor != null && charBgColor != -1 && Permissions.can_color_cell(state.userModel, state.worldModel)) {
-    if (!charColorAdded) {
-      editArray.push(0);
-    }
-    editArray.push(charBgColor);
-  }
-
-  tellEdit.push(editArray); // track local changes
-  if (!local) {
-    writeBuffer.push(editArray); // send edits to server
-  }
-  if (broadcast) {
-
-    w.broadcastCommand(`{"broadcast":${JSON.stringify(editArray)}}`, true);
-  }
-  nextObjId++;
-}
-
-if (state.userModel.is_member){if(!confirm("You are a member or owner of this world. Playing is dangerous, press OK to play anyways")){location.reload();} }
 
 
   const GetPlayer = (id = null) => {
@@ -414,21 +258,21 @@ if (state.userModel.is_member){if(!confirm("You are a member or owner of this wo
 
 
   async function tickAllObjects(list) {
-if(!paused)
-{    w.render();
-    if (countObjectsByClass(characterList, "Fireball") == 0) {
-      player.canFire = true;
-    }
-    if (!player.canFire) {
-      deleteObjectsByClass(characterList, "Fireball")
-    }
+    if (!paused) {
+      w.render();
+      if (countObjectsByClass(characterList, "Fireball") == 0) {
+        player.canFire = true;
+      }
+      if (!player.canFire) {
+        deleteObjectsByClass(characterList, "Fireball")
+      }
 
-    for (const key of Object.keys(list)) {
-      const o = list[key];
-      await o.tick();
-    }
+      for (const key of Object.keys(list)) {
+        const o = list[key];
+        await o.tick();
+      }
 
-}
+    }
     requestAnimationFrame(() => tickAllObjects(list));
   }
   async function killAllObjects(list) {
@@ -439,6 +283,21 @@ if(!paused)
     }
 
     requestAnimationFrame(() => tickAllObjects(list));
+  }
+
+  function spawnEnemies() {
+    const spawn = findCharsInViewport("[^❗]");
+    for (let location in spawn) {
+      const [x, y, z, w] = spawn[location];
+      const spawnData = (getJSONFromCell(x, y, z, w));
+      if (spawnData.enemy) {
+        if (spawnData.enemy == "gumba") {
+          const gumba = new Gumba(x, y, z, w);
+          broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0, bgColor);
+        }
+      }
+    }
+
   }
 
   //--------------------------------------------END OF HELPER FUNCTIONS----------------------------------------------------------------------
@@ -553,6 +412,15 @@ if(!paused)
     burned: "ᙉ",
     dead: " ",
   }, );
+  const GumbaCellReps = createCellReps({
+    stand: "ᴥ",
+    squat: "ᴥ",
+    run: "ᴥ",
+    jump: "ᴥ",
+    fall: "ᴥ",
+    burned: "ᴥ",
+    dead: " ",
+  }, );
 
   function getBlockData(character, loc) {
     let [fx, fy, fz, fw] = loc;
@@ -566,17 +434,17 @@ if(!paused)
       }
       if (RandomBlockData.upgrade) {
 
-      if (!RandomBlockData.replacement) {
-        broadcastWrite("□", "#000", fx, fy, fz, fw,true, true);
+        if (!RandomBlockData.replacement) {
+          broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
 
-      }
+        }
 
         if (RandomBlockData.upgrade == 'feather') {
 
           if (character.isBig) {
 
             const feather = new Feather(fx2, fy2, fz2, fw2);
-            
+
           } else {
             //if you arent big, you get a mushroom
 
@@ -587,7 +455,7 @@ if(!paused)
 
           const mushroom = new Mushroom(fx2, fy2, fz2, fw2);
         } else if (RandomBlockData.upgrade == 'flower') {
- if (character.isBig) {
+          if (character.isBig) {
 
             broadcastWrite("⸙", "#000", fx2, fy2, fz2, fw2, true, true);
 
@@ -597,24 +465,24 @@ if(!paused)
             const mushroom = new Mushroom(fx2, fy2, fz2, fw2);
           }
 
-          
+
         } else if (RandomBlockData.upgrade == 'deathShroom') {
 
           const deathShroom = new DeathShroom(fx2, fy2, fz2, fw2);
         }
         playsound("appear");
       }
-      if(RandomBlockData.coin){
-			broadcastWrite("▫", "#000", fx2, fy2, fz2, fw2, true, true);
+      if (RandomBlockData.coin) {
+        broadcastWrite("▫", "#000", fx2, fy2, fz2, fw2, true, true);
 
-character.coins += RandomBlockData.coin;
-playsound("coin");
-setTimeout(function(){
-broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
-},5000)
-}
+        character.coins += RandomBlockData.coin;
+        playsound("coin");
+        setTimeout(function() {
+          broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
+        }, 5000)
+      }
       if (RandomBlockData.location) {
-      playsound("enter")
+        playsound("enter")
         broadcastWrite(" ", 0, x, y, z, w, true, true);
 
         if (Math.abs(character.location[0] - RandomBlockData.location[0]) > 10 || Math.abs(character.location[0] - RandomBlockData.location[1]) > 10 || RandomBlockData.warp) {
@@ -629,7 +497,7 @@ broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
               character.location = RandomBlockData.location;
               character.center = true;
               playsound("exit")
-            }, 2000);
+            }, 3000);
           }
         } else {
           character.destination = RandomBlockData.location;
@@ -649,7 +517,7 @@ broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
 
       }
     }
-    
+
   }
 
 
@@ -677,6 +545,7 @@ broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
       this.moveRight = false;
       this.canFire = false;
       this.flowerPower = false;
+      this.isEnemy = false;
       this.squat = false;
       this.jumped = false;
       this.jumpFrames = 3;
@@ -749,27 +618,27 @@ broadcastWrite("□", "#000", fx, fy, fz, fw, true, true);
         } else if (obj == "feather") {
           this.canFly = true;
           this.isBig = true;
-					playsound("powerup");
+          playsound("powerup");
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
-        }else if (obj == "flower") {
-					playsound("powerup");
+        } else if (obj == "flower") {
+          playsound("powerup");
           this.flowerPower = true;
           this.isBig = true;
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "coin") {
           this.coins++;
           this.points += 100;
-					playsound("coin");
+          playsound("coin");
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "randomBox") {
           getBlockData(this, loc);
         } else if (obj == "breakableBrick") {
           if (this.isBig) {
-          playsound("break");
-          this.jumpFrames = 0;
-if(this.velocity[1] < 0){
-this.velocity[1] = 0;
-}
+            playsound("break");
+            this.jumpFrames = 0;
+            if (this.velocity[1] < 0) {
+              this.velocity[1] = 0;
+            }
 
             broadcastWrite("⠛", "#000", a, b, c, d, true, true);
             setTimeout(function() {
@@ -813,19 +682,34 @@ this.velocity[1] = 0;
     }
 
     onDamaged() {
-if(!this.invincible)
-      {this.lives--;
-      if (this.lives <= 0) {
-        this.die();
-      }
-      if (this.isMain) {
-      if(this.canFly || this.isBig){
-			playsound("powerdown")
+      if (!this.invincible &&  this.canTakeDamage) {
+        this.lives--;
+        if (this.lives <= 0) {
+          this.die();
+        }
+        if (this.isMain) {
+        playsound("kick")
+          if (this.canFly || this.isBig) {
+
+            playsound("powerdown")
+          }
+          this.canFly = false;
+          this.isBig = false;
+
+
+
+          this.canTakeDamage = false;
+          setTimeout(() => {
+            this.canTakeDamage = true;
+
+          }, 2000);
+
+
+        }
+if(this.isEnemy){
+playsound("stomp")
 }
-        this.canFly = false;
-        this.isBig = false;
-        
-      }}
+      }
     }
 
 
@@ -884,9 +768,11 @@ if(!this.invincible)
 
       // if the character is moving up
       if (this.moveUp && (this.jumpFrames > 0)) {
-			if(this.jumpFrames == 3 && !this.canFly){playsound("jump");}else if(this.canFly && this.jumpFrames == 3){
-playsound("fly")
-}
+        if (this.jumpFrames == 3 && !this.canFly) {
+          playsound("jump");
+        } else if (this.canFly && this.jumpFrames == 3) {
+          playsound("fly")
+        }
         this.jumped = true;
         this.jumpFrames--;
 
@@ -909,7 +795,8 @@ playsound("fly")
       const isBreakbleBrick = sm_breakable_Brick.includes(getChar(ua, ub, uc, ud));
       const isRandomBox = sm_random.includes(getChar(ua, ub, uc, ud));
       const isPipeUD = sm_tube_UD.includes(getChar(ua, ub, uc, ud));
-      const isPipeLR = sm_tube_LR.includes(getChar(ua, ub, uc, ud));
+      const isPipeLeft = sm_tube_Left.includes(getChar(ua, ub, uc, ud));
+      const isPipeRight = sm_tube_Right.includes(getChar(ua, ub, uc, ud));
       if (this.isMain) {
         if (isCoin) {
           this.collideWith("coin", loc);
@@ -920,14 +807,14 @@ playsound("fly")
         if (isBreakbleBrick && this.moveUp) {
           this.collideWith("breakableBrick", [ua, ub, uc, ud]);
         }
-        if (isPipeUD && (this.moveUp || this.squat)) {
+        if (isPipeUD && this.isMain && (this.moveUp || this.squat) && this.isMushroom) {
           this.collideWith("pipe", [ua, ub, uc, ud]);
         }
 
       }
 
 
-      if (isPipeLR && (this.moveLeft || this.moveRight || this.autoMoveLaterially)) {
+      if (isPipeLeft && this.moveLeft || isPipeRight && this.moveRight || this.autoMoveLaterially) {
         this.collideWith("pipe", [ua, ub, uc, ud]);
       }
     }
@@ -946,11 +833,16 @@ playsound("fly")
       const hurtsTop = sm_hurts.includes(nearbyCells.topChar[0][1]);
       const hurtsBottom = sm_hurts.includes(nearbyCells.bottomChar[0][1]);
 
-
       const hurtsRightFire = sm_hurts_fire.includes(nearbyCells.rightChar[0][1]);
       const hurtsLeftFire = sm_hurts_fire.includes(nearbyCells.leftChar[0][1]);
       const hurtsTopFire = sm_hurts_fire.includes(nearbyCells.topChar[0][1]);
       const hurtsLava = sm_lava.includes(nearbyCells.bottomChar[0][1]);
+
+      const isEnemyL = sm_enemy.includes(nearbyCells.leftChar[0][1]);
+      const isEnemyR = sm_enemy.includes(nearbyCells.rightChar[0][1]);
+      const isEnemyU = sm_enemy.includes(nearbyCells.topChar[0][1]);
+      const isEnemyD = sm_enemy.includes(nearbyCells.bottomChar[0][1]);
+      const isplayerU = marioSpecChars.includes(nearbyCells.topChar[0][1]);
 
 
       // Determine the direction of movement
@@ -1047,15 +939,15 @@ playsound("fly")
       }
 
       this.velocity = [vX, vY];
- if (blockedDirections.up) {
-if(this.moveUp){
-playsound("dud");
-this.jumpFrames = 0;
-if(this.velocity[1] < 0){
-this.velocity[1] = 0;
-}
-}
-}
+      if (blockedDirections.up) {
+        if (this.moveUp) {
+          playsound("dud");
+          this.jumpFrames = 0;
+          if (this.velocity[1] < 0) {
+            this.velocity[1] = 0;
+          }
+        }
+      }
 
 
       //handle auto moving objects
@@ -1071,9 +963,9 @@ this.velocity[1] = 0;
 
         if (blockedDirections.down) {
           this.jumpFrames = this.squat && this.isBig ? 4 : 3;
-if(this.moveUp){
-playsound("jump")
-}
+          if (this.moveUp) {
+            playsound("jump")
+          }
         }
       } else if (!this.jumped) {
         if (blockedDirections.down) {
@@ -1081,17 +973,30 @@ playsound("jump")
 
         }
       }
-      if(this.squat){
-  this.cellRep = this.cellReps.squat[this.isFacingLeft ? 'left' : 'right'];
-}
+      if (this.squat) {
+        this.cellRep = this.cellReps.squat[this.isFacingLeft ? 'left' : 'right'];
+      }
 
       if (hurtsLava) {
         this.collideWith("lava", nearbyCells.bottomChar[1]);
       }
+      if (this.isMain && (isEnemyL || isEnemyR || isEnemyU)) {
+        this.collideWith("hurt", nearbyCells.topChar[1]);
+      }
+      if (this.isMain && isEnemyL) {
+        this.points += 100;
+        vY = -3;
+      }
+      if (this.isEnemy && (isplayerU)) {
 
-      if (!this.isMain) {
+        this.collideWith("hurt", [x, y, z, w]);
+      }
+
+
+      if (!this.isMain && !this.isEnemy) {
         this.onDamaged();
       }
+
       return (vX == 0 && vY == 0);
     }
     //do the actual movement based on velocity
@@ -1120,6 +1025,11 @@ playsound("jump")
       } else if (this.moveRight && cvX == 0 || this.autoMoveLaterially && !this.isFacingLeft) {
 
         this.tryCollect(this.destination, [1, 0]);
+
+      } else if (this.squat) {
+
+        this.tryCollect(this.destination, [0, 1]);
+
       } else {
 
         this.tryCollect(this.destination, [0, 0]);
@@ -1197,7 +1107,7 @@ playsound("jump")
           this.cellRep = this.cellReps.burned[this.isFacingLeft ? 'left' : 'right'];
         }
 
-					
+
         // draw the character here
         broadcastWrite(this.eraseChar, "#000", a, b, c, d, true, true);
         this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ? getChar(dx, dy, dz, dw) : " ";
@@ -1226,7 +1136,7 @@ playsound("jump")
         }
         if (this.isMain && !this.isProjectile) {
           if (this.center) {
-            centerPlayer(this.location);
+            centerPlayer(this.location, [0, 0], 0.05);
           }
         }
       }
@@ -1307,11 +1217,41 @@ playsound("jump")
       this.velocity = [1, 0];
     }
   }
+  class _1up extends Mushroom {
+    constructor(x, y, z, w) {
+      super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+      this.name = "1up";
+      this.cellReps = _1upCellReps;
+    }
+  }
   class DeathShroom extends Mushroom {
     constructor(x, y, z, w) {
       super(x, y, z, w, name + "_" + Object.keys(characterList).length);
       this.name = "deathShroom";
       this.cellReps = DeathShroomCellReps;
+    }
+  }
+
+  class Gumba extends Character {
+    constructor(x, y, z, w) {
+      super(x, y, z, w, name + "_" + Object.keys(characterList).length);
+      this.name = "gumba";
+      this.lives = 1;
+      this.id = this.name + "_" + (Object.keys(characterList).length - 1);
+      this.isMain = false;
+      this.onCreated();
+      this.isProjectile = false;
+      this.isFeather = false;
+      this.isMushroom = false;
+      this.isCollectable = false;
+      this.cellReps = GumbaCellReps;
+      this.alwaysTakesDamage = false;
+      this.autoMoveLaterially = true;
+      this.tickEveryN = 20;
+      this.velocity = [-1, 0];
+      this.isEnemy = true;
+      this.isFacingLeft = true;
+
     }
   }
   var hitTimeout = setTimeout(AllowHits, 1000);
@@ -1367,13 +1307,14 @@ playsound("jump")
 
             const fireBallEraseChar = getChar(CorrectLocation(a2, b2, c2, d2))
 
-if (player.flowerPower)
-{            const fireBall = new Fireball(a2, b2, c2, d2);
-playsound("fireball");
-            fireBall.eraseChar = fireBallEraseChar;
+            if (player.flowerPower) {
+              const fireBall = new Fireball(a2, b2, c2, d2);
+              playsound("fireball");
+              fireBall.eraseChar = fireBallEraseChar;
 
-            fireBall.isFacingLeft = isFacingLeft;
-            tempInvincible();}
+              fireBall.isFacingLeft = isFacingLeft;
+              tempInvincible();
+            }
           }
 
 
@@ -1392,28 +1333,27 @@ playsound("fireball");
 
 
     }
-if(isPauseKey){
-playsound("pause")
-paused = !paused;
-if(!paused && !muteCB.checked){
+    if (isPauseKey) {
+      playsound("pause")
+      paused = !paused;
+      if (!paused && !muteCB.checked) {
 
-playsound("music")
-setMute(false);
-}
-if(paused){
-setMute(true);
-}
-const pauseOverly = document.getElementById("paused-overlay")
-if(pauseOverly.classList[0] == "show") {
-pauseOverly.classList.remove("show")
-pauseOverly.classList.add("hide");
-}
-else{
-pauseOverly.classList.remove("hide")
-pauseOverly.classList.add("show");
-}
+        playsound("music")
+        setMute(false);
+      }
+      if (paused) {
+        setMute(true);
+      }
+      const pauseOverly = document.getElementById("paused-overlay")
+      if (pauseOverly.classList[0] == "show") {
+        pauseOverly.classList.remove("show")
+        pauseOverly.classList.add("hide");
+      } else {
+        pauseOverly.classList.remove("hide")
+        pauseOverly.classList.add("show");
+      }
 
-}
+    }
   });
 
   document.addEventListener("keyup", (event) => {
@@ -1422,7 +1362,7 @@ pauseOverly.classList.add("show");
     const isLeftKey = event.key === "a";
     const isDownKey = event.key === "s";
     const isRightKey = event.key === "d";
-  
+
     if (isJumpKey) {
       player.moveUp = false;
       if (player.canFly) {
@@ -1441,7 +1381,7 @@ pauseOverly.classList.add("show");
 
   //--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
 
-
+replaceCharWithImage(superMarioChars,sm_halfY,sm_wide);
 
   function makePlayer() {
     const playerStarts = FindCharsInViewport("[^⛹]", true, true);
@@ -1454,7 +1394,7 @@ pauseOverly.classList.add("show");
         if (charInfo.protection === 2) {
           const startLocation = getJSONFromCell(a, b, c, d).start || [0, 0, 1, 1];
           broadcastWrite(" ", "#fff", a, b, c, d, true, true);
-          
+
           const [x, y, z, w] = startLocation;
           player = new Player(x, y, z, w, "luigi", marioCellReps);
         }
@@ -1466,22 +1406,27 @@ pauseOverly.classList.add("show");
   tickAllObjects(characterList);
 
   setInterval(() => {
-if(!paused){
-    globalTickIterator++;}
+    if (!paused) {
+      globalTickIterator++;
+
+    }
 
   }, 100);
 
   setInterval(() => {
-if(!paused)
-{    renderTiles(true);}
-updateCBValues();
-
+    if (!paused) {
+      renderTiles(true);
+    }
+    updateCBValues();
+    spawnEnemies();
   }, 1000);
   //----------------------------------------------------------CellVisual Library
 
   //just to show grid
   renderTiles(true);
-recieveBroadcastWrites(true);
-  setTimeout(function(){paused = true;},101)
+  recieveBroadcastWrites(true);
+  setTimeout(function() {
+    paused = true;
+  }, 101)
 
 }
