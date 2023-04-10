@@ -325,7 +325,7 @@ const isCharOfType = (charCode, str = "") => {
   return index >= 0;
 };
 
-const replaceCharWithImage = (masterString, shortSubstring = "", wideSubstring = "") => {
+const replaceCharWithImage = (masterString, shortSubstring = "", wideSubstring = "", offsetRightSubstring) => {
   w.registerHook("renderchar", (charCode, ctx, tileX, tileY, charX, charY, offsetX, offsetY, width, height) => {
     const char = String.fromCharCode(charCode);
     const str = masterString; // this is the main string used for image replacement.
@@ -349,6 +349,9 @@ const replaceCharWithImage = (masterString, shortSubstring = "", wideSubstring =
         width /= 1.3;
         offsetX += width / 6;
       }
+if(offsetRightSubstring.includes(char)){
+offsetX += width / 2;
+}
       ctx.drawImage(charImages[index], offsetX, offsetY, width, height);
     } 
     return false;
