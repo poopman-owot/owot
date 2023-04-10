@@ -1,5 +1,5 @@
 const imgBase = "https://ik.imagekit.io/poopman/Mario/";
-const imgUpdate = "?updatedAt=1681000069401";
+const imgUpdate = "?updatedAt=1681139719264";
 const getImage = (imgName) => {
   return imgBase + imgName + imgUpdate;
 }
@@ -96,4 +96,10 @@ const SMImageSrc = {
   powerup_flower:[getImage("powerup-flower.png")],
 
   gumba: [getImage("gumba-01.png"), getImage("gumba-02.png")],
+  msg_block: [getImage("sm-message-block.png")],
+  turtle_walk_left: [getImage("sm-turtle_walk_left_01.png"),getImage("sm-turtle_walk_left_02.png")],
+  turtle_walk_right: [getImage("sm-turtle_walk_right_01.png"),getImage("sm-turtle_walk_right_02.png")],
+  shell: [getImage("sm-shell-01.png")],
+  shell_spin: [getImage("sm-shell-01.png"),getImage("sm-shell-02.png"),getImage("sm-shell-03.png")],
+  plant: [getImage("sm-plant-01.png"),getImage("sm-plant-02.png"),getImage("sm-plant-03.png"),getImage("sm-plant-04.png"),getImage("sm-plant-05.png"),getImage("sm-plant-04.png"),getImage("sm-plant-03.png"),getImage("sm-plant-02.png"),getImage("sm-plant-01.png")],
 }
