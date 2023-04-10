@@ -357,4 +357,4 @@ w.on("cmd", function(arr) {
 })
 
 }
-recieveBroadcastScore(true);
+
