@@ -271,7 +271,7 @@ const deleteObjectsByClass = (list, className) => {
   for (const key of Object.keys(list)) {
     const o = list[key];
     if (o.constructor.name === className && o.lives <= 0) {
-      delete list[key];
+      list[key] = null;
       count++;
     }
   }
