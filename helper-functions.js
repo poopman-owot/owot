@@ -307,7 +307,6 @@ const createCellReps = (data) => {
 };
 
 
-
 const findImageCharKey = (imageSrcObject, charCode, str = "") => {
   const char = String.fromCharCode(charCode);
   const index = str.indexOf(char);
@@ -322,279 +321,33 @@ const isCharOfType = (charCode, str = "") => {
   return index >= 0;
 };
 
-const isValidImageSymbol = (charCode) => isCharOfType(charCode, superMarioChars);
-
-const fillImageChar = (charCode, textRender, x, y, clampW, clampH) => {
-  let tmpCellW = clampW / tileC;
-  let tmpCellH = clampH / tileR;
-  let sx = Math.floor(x * tmpCellW);
-  let sy = Math.floor(y * tmpCellH);
-  let ex = Math.floor((x + 1) * tmpCellW);
-  let ey = Math.floor((y + 1) * tmpCellH);
-
-  tmpCellW = ex - sx;
-  tmpCellH = ey - sy;
-
-  const [charKey, charIndex] = findImageCharKey(SMImageSrc, charCode, superMarioChars);
-  if (charKey !== undefined) {
-    const imageSrc = CycleImage(SMImageSrc[charKey], globalTickIterator);
-    charImages[charIndex].src = imageSrc;
-  } else {
-    return false;
-  }
-
-  if (isCharOfType(charCode, sm_halfY)) {
-    sy -= tmpCellH - (tmpCellH * 1.5);
-  }
-
-  if (isCharOfType(charCode, sm_halfX)) {
-    sx -= tmpCellW - (tmpCellW * 1.5);
-  }
-  if (isCharOfType(charCode, sm_wide)) {
-    sx -= (tmpCellW);
-  }
-  textRender.drawImage(charImages[charIndex], sx, sy, ex - sx, ey - sy);
-  return true;
-};
-
-function fillBlockChar(charCode, textRender, x, y, clampW, clampH, flags) {
-  var isBold = flags ? flags & 1 : 0;
-  var isOverflow = flags ? flags & 2 : 0;
-  //Check if the symbol should be an specific image.
-  if (isValidImageSymbol(charCode)) {
-    return fillImageChar(charCode, textRender, x, y, clampW, clampH);
-  } else if (!isValidSpecialSymbol(charCode)) {
-    return false;
-  }
-  if (isOverflow) return true; // ignore
-  var transform = [0, 1]; // (left, right, up, down = 0, 1, 2, 3), percentage
-
-  var tmpCellW = clampW / tileC;
-  var tmpCellH = clampH / tileR;
-  var sx = Math.floor(x * tmpCellW);
-  var sy = Math.floor(y * tmpCellH);
-  var ex = Math.floor((x + 1) * tmpCellW);
-  var ey = Math.floor((y + 1) * tmpCellH);
-  tmpCellW = ex - sx;
-  tmpCellH = ey - sy;
-
-  switch (charCode) { // 1/8 blocks
-    case 0x2580:
-      transform = [2, 4 / 8];
-      break;
-    case 0x2581:
-      transform = [3, 1 / 8];
-      break;
-    case 0x2582:
-      transform = [3, 2 / 8];
-      break;
-    case 0x2583:
-      transform = [3, 3 / 8];
-      break;
-    case 0x2584:
-      transform = [3, 4 / 8];
-      break;
-    case 0x2585:
-      transform = [3, 5 / 8];
-      break;
-    case 0x2586:
-      transform = [3, 6 / 8];
-      break;
-    case 0x2587:
-      transform = [3, 7 / 8];
-      break;
-    case 0x2588:
-      transform = [0, 8 / 8];
-      break; // full block
-    case 0x2589:
-      transform = [0, 7 / 8];
-      break;
-    case 0x258A:
-      transform = [0, 6 / 8];
-      break;
-    case 0x258B:
-      transform = [0, 5 / 8];
-      break;
-    case 0x258C:
-      transform = [0, 4 / 8];
-      break;
-    case 0x258D:
-      transform = [0, 3 / 8];
-      break;
-    case 0x258E:
-      transform = [0, 2 / 8];
-      break;
-    case 0x258F:
-      transform = [0, 1 / 8];
-      break;
-    case 0x2590:
-      transform = [1, 4 / 8];
-      break;
-    case 0x2594:
-      transform = [2, 1 / 8];
-      break;
-    case 0x2595:
-      transform = [1, 1 / 8];
-      break;
-    case 0x1FB82:
-      transform = [2, 2 / 8];
-      break;
-    case 0x1FB83:
-      transform = [2, 3 / 8];
-      break;
-    case 0x1FB84:
-      transform = [2, 5 / 8];
-      break;
-    case 0x1FB85:
-      transform = [2, 6 / 8];
-      break;
-    case 0x1FB86:
-      transform = [2, 7 / 8];
-      break;
-    case 0x1FB87:
-      transform = [1, 2 / 8];
-      break;
-    case 0x1FB88:
-      transform = [1, 3 / 8];
-      break;
-    case 0x1FB89:
-      transform = [1, 5 / 8];
-      break;
-    case 0x1FB8A:
-      transform = [1, 6 / 8];
-      break;
-    case 0x1FB8B:
-      transform = [1, 7 / 8];
-      break;
-    default:
-      var is2by2 = charCode >= 0x2596 && charCode <= 0x259F;
-      var is2by3 = charCode >= 0x1FB00 && charCode <= 0x1FB3B;
-      var is2by4 = charCode >= 0x1CD00 && charCode <= 0x1FBE7;
-      var is90degTri = charCode >= 0x25E2 && charCode <= 0x25E5;
-      var isIsoTri = charCode == 0x25B2 || charCode == 0x25BA || charCode == 0x25BC || charCode == 0x25C4;
-      var isTriangleShard = (charCode >= 0x1FB3C && charCode <= 0x1FB6F) ||
-        (charCode >= 0x1FB9A && charCode <= 0x1FB9B) ||
-        isBold && (is90degTri || isIsoTri);
-      if (is2by2) { // 2x2 blocks
-        var pattern = [2, 1, 8, 11, 9, 14, 13, 4, 6, 7][charCode - 0x2596];
-        textRender.beginPath();
-        if (pattern & 8) textRender.rect(sx, sy, tmpCellW / 2, tmpCellH / 2);
-        if (pattern & 4) textRender.rect(sx + tmpCellW / 2, sy, tmpCellW / 2, tmpCellH / 2);
-        if (pattern & 2) textRender.rect(sx, sy + tmpCellH / 2, tmpCellW / 2, tmpCellH / 2);
-        if (pattern & 1) textRender.rect(sx + tmpCellW / 2, sy + tmpCellH / 2, tmpCellW / 2, tmpCellH / 2);
-        textRender.fill();
-        return true;
-      } else if (is2by3) { // 2x3 blocks
-        var code = 0;
-        if (charCode >= 0x1FB00 && charCode <= 0x1FB13) code = charCode - 0x1FB00 + 1;
-        if (charCode >= 0x1FB14 && charCode <= 0x1FB27) code = charCode - 0x1FB00 + 2;
-        if (charCode >= 0x1FB28 && charCode <= 0x1FB3B) code = charCode - 0x1FB00 + 3;
-        textRender.beginPath();
-        for (var i = 0; i < 6; i++) {
-          if (!(code >> i & 1)) continue;
-          textRender.rect(sx + (tmpCellW / 2) * (i & 1), sy + (tmpCellH / 3) * (i >> 1), tmpCellW / 2, tmpCellH / 3);
-        }
-        textRender.fill();
-        return true;
-      } else if (isTriangleShard) { // LCS shard characters
-        var vecIndex = charCode - 0x1FB3C;
-        if (charCode >= 0x1FB9A && charCode <= 0x1FB9B) {
-          vecIndex -= 42;
-        } else if (is90degTri) {
-          vecIndex = (charCode - 0x25E2) + 54;
-        } else if (isIsoTri) {
-          switch (charCode) {
-            case 0x25B2:
-              vecIndex = 58;
-              break;
-            case 0x25BA:
-              vecIndex = 59;
-              break;
-            case 0x25BC:
-              vecIndex = 60;
-              break;
-            case 0x25C4:
-              vecIndex = 61;
-              break;
-          }
-        }
-        var vecs = lcsShardCharVectors[vecIndex];
-        var gpX = [0, tmpCellW / 2, tmpCellW];
-        var gpY = [0, tmpCellH / 3, tmpCellH / 2, (tmpCellH / 3) * 2, tmpCellH];
-        textRender.beginPath();
-        for (var i = 0; i < vecs.length; i++) {
-          var vec = vecs[i];
-          var gx = gpX[vec[0]];
-          var gy = gpY[vec[1]];
-          if (i == 0) {
-            textRender.moveTo(sx + gx, sy + gy);
-            continue;
-          }
-          textRender.lineTo(sx + gx, sy + gy);
-        }
-        textRender.closePath();
-        textRender.fill();
-        return true;
-      } else if (is2by4) { // 2x4 LCS octant characters
-        var code = 0;
-        if (charCode >= 0x1CD00 && charCode <= 0x1CDE5) {
-          code = lcsOctantCharPoints[charCode - 0x1CD00];
-        } else {
-          switch (charCode) {
-            case 0x1CEA8:
-              code = 1;
-              break;
-            case 0x1CEAB:
-              code = 2;
-              break;
-            case 0x1CEA3:
-              code = 64;
-              break;
-            case 0x1CEA0:
-              code = 128;
-              break;
-            case 0x1FBE6:
-              code = 20;
-              break;
-            case 0x1FBE7:
-              code = 40;
-              break;
-          }
-        }
-        if (!code) return false;
-        textRender.beginPath();
-        for (var py = 0; py < 4; py++) {
-          for (var px = 0; px < 2; px++) {
-            var idx = py * 2 + px;
-            if (code >> idx & 1) {
-              textRender.rect(sx + px * (tmpCellW / 2), sy + py * (tmpCellH / 4), tmpCellW / 2, tmpCellH / 4);
-            }
-          }
-        }
-        textRender.fill();
-        return true;
-      } else {
-        return false;
+const replaceCharWithImage = (masterString, shortSubstring = "", wideSubstring = "") => {
+  w.registerHook("renderchar", (charCode, ctx, tileX, tileY, charX, charY, offsetX, offsetY, width, height) => {
+    const char = String.fromCharCode(charCode);
+    const str = masterString; // this is the main string used for image replacement.
+    const wide = wideSubstring; // this is a substring for cases where you want the image to be 2x wide.
+    const short = shortSubstring; // this is a substring for cases where you want the image to be 1/2 height.
+    const index = str.indexOf(char);
+    const charKey = Object.keys(SMImageSrc)[index];
+    
+    if (charKey !== undefined) {
+      const imageSrc = CycleImage(SMImageSrc[charKey], globalTickIterator);
+      charImages[index].src = imageSrc;
+      ctx.fillStyle = "transparent";
+      ctx.fillRect(offsetX, offsetY, width, height);
+      if (wide.includes(char)) {
+        offsetX -= width / 2;
+        width *= 2;
       }
-  }
-  var dir = transform[0];
-  var frac = transform[1];
-
-  switch (dir) {
-    case 0:
-      ex -= tmpCellW - (tmpCellW * frac);
-      break;
-    case 1:
-      sx += tmpCellW - (tmpCellW * frac);
-      break;
-    case 2:
-      ey -= tmpCellH - (tmpCellH * frac);
-      break;
-    case 3:
-      sy += tmpCellH - (tmpCellH * frac);
-      break;
-  }
-
-  textRender.fillRect(sx, sy, ex - sx, ey - sy);
-  return true;
-}
+      if (short.includes(char)) {
+        offsetY += height / 4;
+        height /= 2;
+        width /= 1.3;
+        offsetX += width / 6;
+      }
+      ctx.drawImage(charImages[index], offsetX, offsetY, width, height);
+    } 
+    return false;
+  });
+};
+w.redraw();
