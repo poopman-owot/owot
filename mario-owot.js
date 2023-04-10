@@ -769,9 +769,15 @@ const plant = new Plant(x, y, z, w);
       } else if (this.isFeather) {
 
       } else if (this.isMain) {
+      var deathScreen = document.getElementById("death-screen-overlay");
+      if (deathScreen.classList[0] == "hide") {
+        deathScreen.classList.remove("hide")
+       
+      }
+ deathScreen.classList.add("show");
         playsound("gameover")
-        confirm("you died");
-        location.reload();
+setTimeout(function(){location.reload();},5000)
+        
       }
 
       delete characterList[this.id];
