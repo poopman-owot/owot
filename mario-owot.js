@@ -810,18 +810,23 @@ else if (RandomBlockData.upgrade == '1up') {
 
     onDamaged() {
       if (!this.invincible && this.canTakeDamage) {
-        this.lives--;
-        if (this.lives <= 0) {
-          this.die();
-        }
+if(!this.isMain){
+this.lives--;
+}
+
         if (this.isMain) {
           playsound("kick")
           if (this.canFly || this.isBig) {
-
-            playsound("powerdown")
-          }
+           playsound("powerdown");
           this.canFly = false;
           this.isBig = false;
+          }
+else{
+this.lives--;
+}
+        if (this.lives <= 0) {
+          this.die();
+        }
 
 
 
@@ -832,6 +837,9 @@ else if (RandomBlockData.upgrade == '1up') {
           }, 2000);
 
 
+        }
+        if (this.lives <= 0) {
+          this.die();
         }
         if (this.isEnemy && !this.alwaysTakesDamage) {
           playsound("stomp")
