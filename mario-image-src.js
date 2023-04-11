@@ -102,4 +102,6 @@ const SMImageSrc = {
   shell: [getImage("sm-shell-01.png")],
   shell_spin: [getImage("sm-shell-01.png"),getImage("sm-shell-02.png"),getImage("sm-shell-03.png")],
   plant: [getImage("sm-plant-01.png"),getImage("sm-plant-02.png"),getImage("sm-plant-03.png"),getImage("sm-plant-04.png"),getImage("sm-plant-05.png"),getImage("sm-plant-04.png"),getImage("sm-plant-03.png"),getImage("sm-plant-02.png"),getImage("sm-plant-01.png")],
+  
+  _1up: [getImage("mushroom_life.png")],
 }
