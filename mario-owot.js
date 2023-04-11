@@ -21,7 +21,7 @@ w.setFlushInterval(1)
 
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸ";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -39,7 +39,7 @@ const sm_halfX = "▫";
 const sm_offsetX = "ሸ"
 const sm_coin = "▫";
 const sm_msg_block = "◙";
-const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊⸙"
+const sm_backGround = "◠╭╮▫⡀⠂⠁💩࿙࿚‚ᘯ⠛⚊⸙ᙁ"
 const sm_destructable = "";
 const sm_feather = "࿙࿚‚";
 const sm_flower = "⸙"; //we just added flower src. need to push to git and upgrade verion number to see it.
@@ -50,6 +50,7 @@ const sm_tube_Right = "╞";
 const sm_tube_Left = "╡";
 const sm_tube_LR = "╞╡";
 const sm_mushroom = "ᘯ";
+const sm_1up = "ᙁ";
 const sm_plant = "ሸ";
 const sm_kills = "ᙉ";
 const sm_gumba = "ᴥ";
@@ -178,6 +179,10 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     if (DoesCellContainChars([a, b, c, d], sm_mushroom)[0]) {
       bgColor = 16744833; //pink
       characterObject.collideWith("mushroom", [a, b, c, d]);
+    }
+        if (DoesCellContainChars([a, b, c, d], sm_1up)[0]) {
+      bgColor = 16744833; //pink
+      characterObject.collideWith("1up", [a, b, c, d]);
     }
     if (DoesCellContainChars([a, b, c, d], sm_flower)[0]) {
       bgColor = 16744833; //pink
@@ -424,6 +429,16 @@ function init() {
     burned: "ᘯ",
     dead: " ",
   }, );
+
+  const _1upCellReps = createCellReps({
+    stand: "ᙁ",
+    squat: "ᙁ",
+    run: "ᙁ",
+    jump: "ᙁ",
+    fall: "ᙁ",
+    burned: "ᙁ",
+    dead: " ",
+  }, );
   const DeathShroomCellReps = createCellReps({
     stand: "ᙉ",
     squat: "ᙉ",
@@ -537,6 +552,10 @@ function init() {
         } else if (RandomBlockData.upgrade == 'deathShroom') {
 
           const deathShroom = new DeathShroom(fx2, fy2, fz2, fw2);
+        }
+else if (RandomBlockData.upgrade == '1up') {
+
+          const lifeShroom = new _1up(fx2, fy2, fz2, fw2);
         }
         playsound("appear");
       }
@@ -683,9 +702,12 @@ function init() {
         if (obj == "mushroom") {
           this.isBig = true;
           playsound("big");
-
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
-        } else if (obj == "feather") {
+        } else if (obj == "1up") {
+          this.lives += 1;
+          playsound("1up");
+          broadcastWrite(" ", "#000", a, b, c, d, true, true);
+        }else if (obj == "feather") {
           this.canFly = true;
           this.isBig = true;
           playsound("powerup");
@@ -697,6 +719,7 @@ function init() {
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
         } else if (obj == "coin") {
           this.coins++;
+
           this.points += 100;
           playsound("coin");
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
@@ -1241,11 +1264,19 @@ function init() {
 
       }
     }
-
+collect(){
+if(this.coins > 100){
+this.coins = 0;
+this.lives += 1;
+playsound("1up");
+}
+}
     async tick() {
+
       if (this.alive && this.canTick) {
         this.frameSlowdown++;
         if (this.frameSlowdown == this.tickEveryN) {
+          this.collect();
           this.setReps();
           this.setVelocity();
 
@@ -1339,6 +1370,7 @@ function init() {
       this.velocity = [1, 0];
     }
   }
+
   class _1up extends Mushroom {
     constructor(x, y, z, w) {
       super(x, y, z, w, name + "_" + Object.keys(characterList).length);
