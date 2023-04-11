@@ -1,6 +1,7 @@
 //--------------------------------------------INIT Variables---------------------------------------------------------------------------------
 let characterList = {};
 let enemyList = {};
+let leaderBoard = {};
 var player = null;
 var blockList = {};
 var globalTickIterator = 0;
@@ -195,7 +196,7 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
     bgColor = 255; //green
     characterObject.collideWith("hurt", [a, b, c, d]);
   }
-    if (DoesCellContainChars([a, b, c, d], sm_shell)[0] && this.isEnemy) {
+  if (DoesCellContainChars([a, b, c, d], sm_shell)[0] && this.isEnemy) {
     bgColor = 255; //green
     characterObject.collideWith("kill", [a, b, c, d]);
   }
@@ -279,9 +280,9 @@ function init() {
 
       for (const key of Object.keys(list)) {
         const o = list[key];
-        if(o !== null){
-        await o.tick();
-}
+        if (o !== null) {
+          await o.tick();
+        }
       }
 
     }
@@ -311,7 +312,7 @@ function init() {
           const turtle = new Turtle(x, y, z, w);
           broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
         }
-         if (spawnData.enemy == "plant") {
+        if (spawnData.enemy == "plant") {
           const plant = new Plant(x, y, z, w);
           broadcastWrite(" ", "#000", x, y, z, w, true, true, 0, 0);
         }
@@ -478,7 +479,7 @@ function init() {
     burned: "⯋",
     dead: " ",
   }, );
-    const PlantCellReps = createCellReps({
+  const PlantCellReps = createCellReps({
     stand: "ሸ",
     squat: "ሸ",
     run: "ሸ",
@@ -487,8 +488,8 @@ function init() {
     burned: "ሸ",
     dead: " ",
   }, );
-  
-  
+
+
   function getBlockData(character, loc) {
     let [fx, fy, fz, fw] = loc;
     const [x, y, z, w] = character.location;
@@ -721,7 +722,7 @@ function init() {
       if (obj == "shell") {
         const shell = new Shell(a, b, c, d);
         tempInvincible();
-				playsound("kick");
+        playsound("kick");
         broadcastWrite(" ", "#000", a, b, c, d, true, true);
         shell.isFacingLeft = this.isFacingLeft;
         if (this.isFacingLeft) {
@@ -754,13 +755,12 @@ function init() {
       if (this.isTurtle || this.isShell) {
 
         this.eraseChar = "⯊";
-      }
-else if(this.isPlant){
-setTimeout(function(){
-const plant = new Plant(x, y, z, w);
-},2000)
+      } else if (this.isPlant) {
+        setTimeout(function() {
+          const plant = new Plant(x, y, z, w);
+        }, 2000)
 
-}
+      }
       broadcastWrite(this.eraseChar, "#000", x, y, z, w, true, true);
 
 
@@ -769,15 +769,17 @@ const plant = new Plant(x, y, z, w);
       } else if (this.isFeather) {
 
       } else if (this.isMain) {
-      var deathScreen = document.getElementById("death-screen-overlay");
-      if (deathScreen.classList[0] == "hide") {
-        deathScreen.classList.remove("hide")
-       
-      }
- deathScreen.classList.add("show");
+        var deathScreen = document.getElementById("death-screen-overlay");
+        if (deathScreen.classList[0] == "hide") {
+          deathScreen.classList.remove("hide")
+
+        }
+        deathScreen.classList.add("show");
         playsound("gameover")
-setTimeout(function(){location.reload();},5000)
-        
+        setTimeout(function() {
+          location.reload();
+        }, 5000)
+
       }
 
       delete characterList[this.id];
@@ -1062,9 +1064,9 @@ setTimeout(function(){location.reload();},5000)
           this.isFacingLeft = false;
         }
       }
-      if(this.isShell && (blockedDirections.right || blockedDirections.left)){
-playsound("dud");
-}
+      if (this.isShell && (blockedDirections.right || blockedDirections.left)) {
+        playsound("dud");
+      }
       if (vX == 0 && vY == 0 && !this.jumped && !this.squat) {
         this.cellRep = this.cellReps.stand[this.isFacingLeft ? 'left' : 'right'];
 
@@ -1106,7 +1108,7 @@ playsound("dud");
       if (this.isEnemy && (isplayerU)) {
         this.collideWith("hurt", [x, y, z, w]);
       }
-      if (this.isEnemy && (hurtsRightFire || hurtsLeftFire || hurtsTopFire || isShellL || isShellR) ) {
+      if (this.isEnemy && (hurtsRightFire || hurtsLeftFire || hurtsTopFire || isShellL || isShellR)) {
         this.collideWith("kill", [x, y, z, w]);
       }
 
@@ -1202,9 +1204,9 @@ playsound("dud");
       } else {
         this.velocity[1] = vY;
       }
-      if(this.alwaysTakesDamage){
-this.onDamaged();
-}
+      if (this.alwaysTakesDamage) {
+        this.onDamaged();
+      }
     }
     draw() {
       if (this.alive) {
@@ -1416,8 +1418,8 @@ this.onDamaged();
       this.velocity = [0, 0];
       this.isEnemy = true;
       this.isTurtle = false;
-	    this.isFacingLeft = false;
-			this.isPlant = true;
+      this.isFacingLeft = false;
+      this.isPlant = true;
     }
   }
   class Shell extends Character {
@@ -1565,13 +1567,13 @@ this.onDamaged();
       player.moveRight = false;
     }
   });
-      const pauseOverly = document.getElementById("paused-overlay")
-      pauseOverly.classList.remove("show");
-			pauseOverly.classList.add("hide");
+  const pauseOverly = document.getElementById("paused-overlay")
+  pauseOverly.classList.remove("show");
+  pauseOverly.classList.add("hide");
 
   //--------------------------------------------END OF CREATE LISTENERS ----------------------------------------------------------------------
 
-  replaceCharWithImage(superMarioChars, sm_halfY, sm_wide,sm_offsetX);
+  replaceCharWithImage(superMarioChars, sm_halfY, sm_wide, sm_offsetX);
 
   function makePlayer() {
     const playerStarts = FindCharsInViewport("[^⛹]", true, true);
@@ -1600,7 +1602,7 @@ this.onDamaged();
       globalTickIterator++;
 
     }
-
+leaderBoard[username] = player.points;
   }, 100);
 
   setInterval(() => {
@@ -1619,4 +1621,87 @@ this.onDamaged();
     paused = false;
   }, 101)
 
+document.getElementById("chat_window").remove();
+document.getElementById("chat_open").remove();
+
+let username = "";
+
+w.on("chat",function(e){
+if(e.message == "This message is visible to only you."){
+username = e.realUsername ? e.realUsername : username = e.id;
+
 }
+removeChatByIdAndDate(e.id,Date.now())
+})
+
+
+
+//--------------------------------------------------
+
+function sortObjectByValueDescending(obj) {
+  const entries = Object.entries(obj);
+  const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
+  return sortedEntries;
+}
+
+const menuText = document.getElementsByClassName("menuText")[0]
+const nav = document.getElementById("nav");
+menuText.innerHTML = "<h3>Leaderboard</h3>";
+menuText.style.display = "block";
+menuText.style.width = "20em";
+nav.style.width = "20em";
+nav.innerHTML = `<ol id="leader-list"></ol>`;
+const leaderList = document.getElementById("leader-list");
+const leaderBoardStyle = `<style>
+#leader-list li {
+text-align:start
+
+}
+
+</style>`
+function updateLeaderBoard(){
+
+const boardArray = sortObjectByValueDescending(leaderBoard);
+leaderList.innerHTML = "";
+for (var entry in boardArray){
+   
+const u = boardArray[entry][0];
+const p = boardArray[entry][1];
+leaderList.insertAdjacentHTML("beforeend",`${leaderBoardStyle}<li><ul><li><strong>${u}:</strong><small>${p}</small></li></ul></li>`)
+}
+leaderBoard = {};
+}
+setInterval(function(){
+api_chat_send("/test");
+let score = {
+player : username,
+points: player.points,
+}
+w.broadcastCommand(`{"broadcast":${JSON.stringify(score)}}`, true);
+
+updateLeaderBoard()},1000);
+
+
+function recieveBroadcastScore(value){
+w.broadcastReceive(value);
+w.on("cmd", function(arr) {
+  if (arr.sender) {
+    if (w.socketChannel !== arr.sender) {
+      if (isJsonString(arr.data)) {
+        const jsonData = JSON.parse(arr.data);
+        if (jsonData.broadcast) {
+         if(jsonData.broadcast.points && jsonData.broadcast.player){
+             leaderBoard[jsonData.broadcast.player] = jsonData.broadcast.points
+         }
+        }
+      }
+    }
+  }
+})
+
+}
+recieveBroadcastScore(true);
+}
+
+
+
