@@ -230,7 +230,7 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 // Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@1.49/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@1.60/mario-image-src.js`, function() {
   // Load images
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.53/helper-functions.js`, function() {
 
