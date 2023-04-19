@@ -3,7 +3,7 @@ const CycleImage = (imageArray, index) => {
 };
 var globalTickIterator = 0;
 var blockList = {};
-
+var localCharBuffer = [];
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
 superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ";
@@ -20,11 +20,18 @@ for (block in superMarioChars) {
 }
 class MaterialLayer {
   constructor(string) {
-    this.begin = string[0];
-    this.middle = string[1];
-    this.end = string[2];
-    this.single = string[3];
-    this.subSurface = string[4];
+    if (!Array.isArray(string)) {
+      this.array = string.split("");
+    } else {
+      this.array = string
+    }
+    this.begin = this.array[0];
+    this.middle = this.array[1];
+    this.end = this.array[2];
+    this.single = this.array[3];
+    this.subSurface = this.array[4];
+    this.localChar = this.array[5];
+    this.json = this.array[6];
   }
 }
 class MaterialLayerVPipe extends MaterialLayer {
@@ -40,37 +47,156 @@ class MaterialLayerVPipe extends MaterialLayer {
   }
 }
 let materialOptions = {
-  bush: new MaterialLayer("╭◠╮"),
-  grass: new MaterialLayer("▅█▆▄▓"),
-  dud: new MaterialLayer("□□□□"),
-  dud_stacked: new MaterialLayer("▤▤▤▤▤"),
-  stone: new MaterialLayer("▩▩▩▩"),
-  stone_stacked: new MaterialLayer("▦▦▦▦▦"),
-  dirt: new MaterialLayer("▓▓▓▓▓"),
-  lava: new MaterialLayer("☵☵☵☵"),
-  pipe_h: new MaterialLayer("╞≣╡≣"),
-  brick: new MaterialLayer("⩨⩨⩨⩨"),
-  brick_stacked: new MaterialLayer("⩩⩩⩩⩩⩩"),
-  flip_block: new MaterialLayer("⚌⚌⚌⚌"),
-  coin: new MaterialLayer("▫▫▫▫▫"),
-  blank: new MaterialLayer("⚃⚃⚃⚃"),
-  blank_stacked: new MaterialLayer("⚅⚅⚅⚅⚅"),
-  quad: new MaterialLayer("◩◩◩◩"),
-  quad_stacked: new MaterialLayer("◨◨◨◨◨"),
-  msg_block: new MaterialLayer("◙◙◙◙"),
-  pipe_V: new MaterialLayerVPipe("╔╕║│╚╛"), // this is a special case
+  bush: {
+    materialLayer: new MaterialLayer("╭◠╮"),
+    url: ["bush_left", "bush_top", "bush_right"],
+  },
+  grass: {
+    materialLayer: new MaterialLayer("▅█▆▄▓"),
+    url: ["grass_edge_flipped", "grass", "grass_edge"]
+  },
+  dud: {
+    materialLayer: new MaterialLayer("□□□□"),
+    url: ["block_dud"]
+  },
+  dud_stacked: {
+    materialLayer: new MaterialLayer("▤▤▤▤▤"),
+    url: ["block_dud_stacked"]
+  },
+  stone_stacked: {
+    materialLayer: new MaterialLayer("▩▩▩▩▩"),
+    url: ["block_stone_stacked"]
+  },
+  stone: {
+    materialLayer: new MaterialLayer("▦▦▦▦"),
+    url: ["block_stone"]
+  },
+  dirt: {
+    materialLayer: new MaterialLayer("▓▓▓▓▓"),
+    url: ["dirt"]
+  },
+  lava: {
+    materialLayer: new MaterialLayer("☵☵☵☵"),
+    url: ["lava"]
+  },
+  pipe_h: {
+    materialLayer: new MaterialLayer("╞≣╡≣"),
+    url: ["pipe_opening_left_h", "pipe_body_h", "pipe_body_h", "pipe_opening_right_h"]
+  },
+  brick: {
+    materialLayer: new MaterialLayer("⩨⩨⩨⩨"),
+    url: ["brick"]
+  },
+  brick_stacked: {
+    materialLayer: new MaterialLayer("⩩⩩⩩⩩⩩"),
+    url: ["block_stacked"]
+  },
+  flip_block: {
+    materialLayer: new MaterialLayer("⚌⚌⚌⚌"),
+    url: ["flip_block"]
+  },
+  coin: {
+    materialLayer: new MaterialLayer("▫▫▫▫▫"),
+    url: ["coin"]
+  },
+  blank: {
+    materialLayer: new MaterialLayer("⚃⚃⚃⚃"),
+    url: ["block_blank"]
+  },
+  blank_stacked: {
+    materialLayer: new MaterialLayer("⚅⚅⚅⚅⚅"),
+    url: ["block_blank_stacked"]
+  },
+  quad: {
+    materialLayer: new MaterialLayer("◩◩◩◩"),
+    url: ["quad"]
+  },
+  quad_stacked: {
+    materialLayer: new MaterialLayer("◨◨◨◨◨"),
+    url: ["quad_stacked"]
+  },
+  pipe_V: {
+    materialLayer: new MaterialLayerVPipe("╔╕║│╚╛"),
+    url: ["pipe_opening_left_up", "pipe_opening_right_up"]
+  }, // this is a special case
+
+  gumba: {
+    materialLayer: new MaterialLayer(["❗", "", "", "❗", "", "ᴥ", '\x1B$u"\\"enemy\\":\\"gumba\\""❗']),
+    url: ["gumba"],
+  },
+  turtle: {
+    materialLayer: new MaterialLayer(["❗", "", "", "❗", "", "⦈", '\x1B$u"\\"enemy\\":\\"turtle\\""❗']),
+    url: ["turtle_walk_left"],
+  },
+  plant: {
+    materialLayer: new MaterialLayer(["❗", "", "", "❗", "", "ሸ", '\x1B$u"\\"enemy\\":\\"plant\\""❗']),
+    url: ["plant"],
+  },
+  mushroom: {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"upgrade\\":\\"mushroom\\",\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","mushroom"],
+  },
+  flower: {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"upgrade\\":\\"flower\\",\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","powerup_flower"],
+  },
+  feather: {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"upgrade\\":\\"feather\\",\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","featherFall1"],
+  },
+  deathshroom: {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"upgrade\\":\\"deathShroom\\",\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","deathShroom"],
+  },
+    "1up": {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"upgrade\\":\\"1up\\",\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","_1up"],
+  },
+  "coin block": {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"coin\\":1,\\"replacement\\":\\"□\\""▣']),
+    url: ["lucky_block","coin"],
+  },
 }
 
-let material = materialOptions.grass;
+let material = materialOptions.grass.materialLayer;
 
 function changeOption(option) {
-  material = materialOptions[option];
-
+  material = materialOptions[option].materialLayer;
+  return materialOptions[option].url;
 }
 
 function main() {
 
+  function renderBlock(char, charColor, tileX, tileY, charX, charY) {
+    if (!Tile.get(tileX, tileY)) {
+      Tile.set(tileX, tileY, blankTile());
+    }
+    var tile = Tile.get(tileX, tileY);
+    var cell_props = tile.properties.cell_props;
+    if (!cell_props) cell_props = {};
+    var color = tile.properties.color;
+    if (!color) color = new Array(tileArea).fill(0);
 
+    var hasChanged = false;
+    var prevColor = 0;
+    var prevBgColor = -1;
+    var prevChar = "";
+    var prevLink = getLink(tileX, tileY, charX, charY);
+
+    // set text color
+    prevColor = color[charY * tileC + charX];
+    color[charY * tileC + charX] = charColor;
+    if (prevColor != charColor) hasChanged = true;
+    tile.properties.color = color; // if the color array doesn't already exist in the tile
+    // update cell properties (link positions)
+
+    // set char locally
+    var con = tile.content;
+    prevChar = con[charY * tileC + charX];
+    con[charY * tileC + charX] = char;
+    if (prevChar != char) hasChanged = true;
+    w.setTileRedraw(tileX, tileY);
+  }
 
   w.drawSelect = new RegionSelection()
   let marioEvent;
@@ -201,8 +327,13 @@ function main() {
 
         }
         if (pasteChar) {
-          pasteString += pasteChar;
+          if (material.json) {
+            pasteString += material.json;
+          } else {
+            pasteString += pasteChar;
+          }
         }
+
 
       }
       if (h !== height - 1) {
@@ -213,7 +344,9 @@ function main() {
     }
 
     paste(pasteString);
-
+    if (material.localChar) {
+      localCharBuffer.push([material.localChar, 0, X, Y, x, y]);
+    }
 
 
   }
@@ -305,8 +438,17 @@ function main() {
   setInterval(() => {
     globalTickIterator++;
     renderTiles(true);
+    renderLocalBuffer();
   }, 100);
   replaceCharWithImage(superMarioChars, sm_halfY, sm_wide, sm_offsetX);
+
+  function renderLocalBuffer() {
+    for (i in localCharBuffer) {
+      let [char, charColor, tileX, tileY, charX, charY] = localCharBuffer[i];
+      renderBlock(char, charColor, tileX, tileY, charX, charY);
+
+    }
+  }
 } //end of main
 
 
@@ -346,11 +488,28 @@ function mb_ui() {
     if (materialOptions.hasOwnProperty(option)) {
       if (option) {
         // Print the key name to the console
+        let optionUrl = changeOption(option + "");
+        let imageHtml = "";
+        for (o in optionUrl) {
+          let imgSrc = SMImageSrc[optionUrl[o] + ""]
+          if (imgSrc) {
+            imgSrc = CycleImage(imgSrc);
+          }
+          imageHtml += `<img style = "width: 1em; height: fit-content;"src = ${imgSrc}>`;
+
+        }
         generateOptions += `
-		<label style='font-size: 0.7em;'>
+		<label style='font-size: 0.7em; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: self-end;'>
+        <div>
+${imageHtml}
+</div>
+  <div style= "display: inline-flex; align-items: self-end;place-content: space-between;">
       <input type="radio" onchange="changeOption('${option}')" name="option" id = "radio-${option}" value="${option}" checked>
       ${option}
+      </div>
+
     </label>
+    <hr dotted style = "border-top-color: darkgray; padding-bottom: 0.3em;">
 `
       }
     }
@@ -364,6 +523,9 @@ function mb_ui() {
     background: #f4f4f4;
     padding: 1em;
     height: 100%;
+    width:11em;
+		overflow-y: scroll;
+    overflow-x: hidden;
 ">
 <p><strong>Mario Builder</strong> <br><small>Early Beta</small></p>
   <form>
