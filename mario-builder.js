@@ -462,7 +462,7 @@ function main() {
 } //end of main
 function changeMessage(){
 const val = document.getElementById("block-message").value;
-materialOptions['msg_block'].materialLayer.json = '\x1B$u"\\"message\\":\\"'+val+'\\""▣'
+materialOptions['msg_block'].materialLayer.json = '\x1B$u"\\"message\\":\\"'+val+'\\""◙'
 }
 function loadBG(){
 const val = document.getElementById("bg-url").value;
