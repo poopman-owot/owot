@@ -61,7 +61,7 @@ const sm_breakable_Brick = "⩨"
 const sm_breakable_Brick_Stacked = "⩩"
 const sm_spike = "▼"
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛÷ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ⸙";
-const sm_hurts = "⡀⠂⠁⯋ሸ";
+const sm_hurts = "⡀⠂⠁";
 const sm_hurts_fire = "⡀⠂⠁";
 const sm_lava = "☵"
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
@@ -181,7 +181,7 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
       bgColor = 16744833; //pink
       characterObject.collideWith("mushroom", [a, b, c, d]);
     }
-        if (DoesCellContainChars([a, b, c, d], sm_1up)[0]) {
+    if (DoesCellContainChars([a, b, c, d], sm_1up)[0]) {
       bgColor = 16744833; //pink
       characterObject.collideWith("1up", [a, b, c, d]);
     }
@@ -553,8 +553,7 @@ function init() {
         } else if (RandomBlockData.upgrade == 'deathShroom') {
 
           const deathShroom = new DeathShroom(fx2, fy2, fz2, fw2);
-        }
-else if (RandomBlockData.upgrade == '1up') {
+        } else if (RandomBlockData.upgrade == '1up') {
 
           const lifeShroom = new _1up(fx2, fy2, fz2, fw2);
         }
@@ -604,8 +603,15 @@ else if (RandomBlockData.upgrade == '1up') {
         character.reset();
 
       }
-        if (RandomBlockData.background) {
-        state.background = { path: RandomBlockData.background+"" }; loadBackgroundData(() => { w.redraw(); }, () => { w.redraw(); });
+      if (RandomBlockData.background) {
+        state.background = {
+          path: RandomBlockData.background + ""
+        };
+        loadBackgroundData(() => {
+          w.redraw();
+        }, () => {
+          w.redraw();
+        });
 
       }
     }
@@ -712,7 +718,7 @@ else if (RandomBlockData.upgrade == '1up') {
           this.lives += 1;
           playsound("1up");
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
-        }else if (obj == "feather") {
+        } else if (obj == "feather") {
           this.canFly = true;
           this.isBig = true;
           playsound("powerup");
@@ -745,8 +751,7 @@ else if (RandomBlockData.upgrade == '1up') {
               }
             }, 100)
           }
-        }
-        else if (obj == "breakableBrick_stacked") {
+        } else if (obj == "breakableBrick_stacked") {
           if (this.isBig) {
             playsound("break");
             this.jumpFrames = 0;
@@ -761,21 +766,20 @@ else if (RandomBlockData.upgrade == '1up') {
               }
             }, 100)
           }
-        }
-        else if (obj == "flipBlock") {
+        } else if (obj == "flipBlock") {
 
-            playsound("break");
-            this.jumpFrames = 0;
-            if (this.velocity[1] < 0) {
-              this.velocity[1] = 0;
+          playsound("break");
+          this.jumpFrames = 0;
+          if (this.velocity[1] < 0) {
+            this.velocity[1] = 0;
+          }
+
+          broadcastWrite("⚊", "#000", a, b, c, d, true, true);
+          setTimeout(function() {
+            if (getChar(a, b, c, d) == "⚊") {
+              broadcastWrite("⚌", "#000", a, b, c, d, true, true);
             }
-
-            broadcastWrite("⚊", "#000", a, b, c, d, true, true);
-            setTimeout(function() {
-              if (getChar(a, b, c, d) == "⚊") {
-                broadcastWrite("⚌", "#000", a, b, c, d, true, true);
-              }
-            }, 1000)
+          }, 1000)
         }
       }
 
@@ -847,23 +851,22 @@ else if (RandomBlockData.upgrade == '1up') {
 
     onDamaged() {
       if (!this.invincible && this.canTakeDamage) {
-if(!this.isMain){
-this.lives--;
-}
+        if (!this.isMain) {
+          this.lives--;
+        }
 
         if (this.isMain) {
           playsound("kick")
           if (this.canFly || this.isBig) {
-           playsound("powerdown");
-          this.canFly = false;
-          this.isBig = false;
+            playsound("powerdown");
+            this.canFly = false;
+            this.isBig = false;
+          } else {
+            this.lives--;
           }
-else{
-this.lives--;
-}
-        if (this.lives <= 0) {
-          this.die();
-        }
+          if (this.lives <= 0) {
+            this.die();
+          }
 
 
 
@@ -965,7 +968,7 @@ this.lives--;
       //check if the destination contains anything of value
       const isCoin = sm_coin.includes(getChar(ua, ub, uc, ud));
       const isBreakbleBrick = sm_breakable_Brick.includes(getChar(ua, ub, uc, ud));
-			const isBreakbleBrick_stacked = sm_breakable_Brick_Stacked.includes(getChar(ua, ub, uc, ud));
+      const isBreakbleBrick_stacked = sm_breakable_Brick_Stacked.includes(getChar(ua, ub, uc, ud));
       const isSpike = sm_spike.includes(getChar(ua, ub, uc, ud));
       const isFlipBlock = sm_flipblock.includes(getChar(ua, ub, uc, ud));
       const isRandomBox = sm_random.includes(getChar(ua, ub, uc, ud));
@@ -982,10 +985,10 @@ this.lives--;
         if (isBreakbleBrick && this.moveUp) {
           this.collideWith("breakableBrick", [ua, ub, uc, ud]);
         }
-         if (isBreakbleBrick_stacked && this.moveUp) {
+        if (isBreakbleBrick_stacked && this.moveUp) {
           this.collideWith("breakableBrick_stacked", [ua, ub, uc, ud]);
         }
-         if (isFlipBlock && this.moveUp) {
+        if (isFlipBlock && this.moveUp) {
           this.collideWith("flipBlock", [ua, ub, uc, ud]);
         }
         if (isSpike && this.moveUp) {
@@ -1139,12 +1142,18 @@ this.lives--;
       //handle auto moving objects
       if (this.autoMoveLaterially) {
         if (blockedDirections.right && !this.isFacingLeft) {
+if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !isEnemyR) ){
           this.isFacingLeft = true;
+}
+
         } else if (blockedDirections.left && this.isFacingLeft) {
+if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !isEnemyL) ){
+           this.isFacingLeft = false;
+}
           this.isFacingLeft = false;
         }
       }
-      if (this.isShell && (blockedDirections.right || blockedDirections.left)) {
+      if (this.isShell && (blockedDirections.right  || blockedDirections.left)) {
         playsound("dud");
       }
       if (vX == 0 && vY == 0 && !this.jumped && !this.squat) {
@@ -1169,7 +1178,7 @@ this.lives--;
       if (hurtsLava) {
         this.collideWith("lava", nearbyCells.bottomChar[1]);
       }
-      if (this.isMain && (isEnemyL || isEnemyR || isEnemyU)) {
+      if (this.isMain && ((isEnemyL && this.moveLeft ) || (isEnemyR && this.moveRight) || isEnemyU)) {
         this.collideWith("hurt", nearbyCells.topChar[1]);
       }
 
@@ -1180,7 +1189,7 @@ this.lives--;
         this.collideWith("shell", nearbyCells.rightChar[1]);
       }
 
-      if (this.isMain && isEnemyL) {
+      if (this.isMain && isEnemyD) {
         this.points += 100;
         vY = -3;
       }
@@ -1312,14 +1321,14 @@ this.lives--;
 
         // draw the character here
         broadcastWrite(this.eraseChar, "#000", a, b, c, d, true, true);
-        this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ? 
-    //if the object is not eraseable
-//if is the spinning block make it stop spinning
-(DoesCellContainChars([dx, dy, dz, dw], "⚊")[0]) ? "⚌" :
+        this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ?
+          //if the object is not eraseable
+          //if is the spinning block make it stop spinning
+          (DoesCellContainChars([dx, dy, dz, dw], "⚊")[0]) ? "⚌" :
 
-           //else rewrite same char
- 				getChar(dx, dy, dz, dw) : 
-     " "; //erase
+          //else rewrite same char
+          getChar(dx, dy, dz, dw) :
+          " "; //erase
         this.location = [dx, dy, dz, dw];
 
         broadcastWrite(CycleImage(this.cellRep), "#000", dx, dy, dz, dw, true, true);
@@ -1328,13 +1337,13 @@ this.lives--;
 
       }
     }
-collect(){
-if(this.coins > 100){
-this.coins = 0;
-this.lives += 1;
-playsound("1up");
-}
-}
+    collect() {
+      if (this.coins > 100) {
+        this.coins = 0;
+        this.lives += 1;
+        playsound("1up");
+      }
+    }
     async tick() {
 
       if (this.alive && this.canTick) {
@@ -1698,7 +1707,7 @@ playsound("1up");
       globalTickIterator++;
 
     }
-leaderBoard[username] = player.points;
+    leaderBoard[username] = player.points;
   }, 100);
 
   setInterval(() => {
@@ -1717,86 +1726,87 @@ leaderBoard[username] = player.points;
     paused = false;
   }, 101)
 
-document.getElementById("chat_window").remove();
-document.getElementById("chat_open").remove();
+  document.getElementById("chat_window").remove();
+  document.getElementById("chat_open").remove();
 
-let username = "";
+  let username = "";
 
-w.on("chat",function(e){
-if(e.message == "This message is visible to only you."){
-username = e.realUsername ? e.realUsername : username = e.id;
+  w.on("chat", function(e) {
+    if (e.message == "This message is visible to only you.") {
+      username = e.realUsername ? e.realUsername : username = e.id;
 
-}
-removeChatByIdAndDate(e.id,Date.now())
-})
+    }
+    removeChatByIdAndDate(e.id, Date.now())
+  })
 
 
 
-//--------------------------------------------------
+  //--------------------------------------------------
 
-function sortObjectByValueDescending(obj) {
-  const entries = Object.entries(obj);
-  const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
-  return sortedEntries;
-}
+  function sortObjectByValueDescending(obj) {
+    const entries = Object.entries(obj);
+    const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
+    return sortedEntries;
+  }
 
-const menuText = document.getElementsByClassName("menuText")[0]
-const nav = document.getElementById("nav");
-menuText.innerHTML = "<h3>Leaderboard</h3>";
-menuText.style.display = "block";
-menuText.style.width = "20em";
-nav.style.width = "20em";
-nav.innerHTML = `<ol id="leader-list"></ol>`;
-const leaderList = document.getElementById("leader-list");
-const leaderBoardStyle = `<style>
+  const menuText = document.getElementsByClassName("menuText")[0]
+  const nav = document.getElementById("nav");
+  menuText.innerHTML = "<h3>Leaderboard</h3>";
+  menuText.style.display = "block";
+  menuText.style.width = "20em";
+  nav.style.width = "20em";
+  nav.innerHTML = `<ol id="leader-list"></ol>`;
+  const leaderList = document.getElementById("leader-list");
+  const leaderBoardStyle = `<style>
 #leader-list li {
 text-align:start
 
 }
 
 </style>`
-function updateLeaderBoard(){
 
-const boardArray = sortObjectByValueDescending(leaderBoard);
-leaderList.innerHTML = "";
-for (var entry in boardArray){
-   
-const u = boardArray[entry][0];
-const p = boardArray[entry][1];
-leaderList.insertAdjacentHTML("beforeend",`${leaderBoardStyle}<li><ul><li><strong>${u}:</strong><small>${p}</small></li></ul></li>`)
-}
-leaderBoard = {};
-}
-setInterval(function(){
-api_chat_send("/test");
-let score = {
-player : username,
-points: player.points,
-}
-w.broadcastCommand(`{"broadcast":${JSON.stringify(score)}}`, true);
+  function updateLeaderBoard() {
 
-updateLeaderBoard()},1000);
+    const boardArray = sortObjectByValueDescending(leaderBoard);
+    leaderList.innerHTML = "";
+    for (var entry in boardArray) {
+
+      const u = boardArray[entry][0];
+      const p = boardArray[entry][1];
+      leaderList.insertAdjacentHTML("beforeend", `${leaderBoardStyle}<li><ul><li><strong>${u}:</strong><small>${p}</small></li></ul></li>`)
+    }
+    leaderBoard = {};
+  }
+  setInterval(function() {
+    api_chat_send("/test");
+    let score = {
+      player: username,
+      points: player.points,
+    }
+    w.broadcastCommand(`{"broadcast":${JSON.stringify(score)}}`, true);
+
+    updateLeaderBoard()
+  }, 1000);
 
 
-function recieveBroadcastScore(value){
-w.broadcastReceive(value);
-w.on("cmd", function(arr) {
-  if (arr.sender) {
-    if (w.socketChannel !== arr.sender) {
-      if (isJsonString(arr.data)) {
-        const jsonData = JSON.parse(arr.data);
+  function recieveBroadcastScore(value) {
+    w.broadcastReceive(value);
+    w.on("cmd", function(arr) {
+      if (arr.sender) {
+        if (w.socketChannel !== arr.sender) {
+          if (isJsonString(arr.data)) {
+            const jsonData = JSON.parse(arr.data);
 
-        if (jsonData.broadcast) {
-         if(jsonData.broadcast.points && jsonData.broadcast.player){
-             leaderBoard[jsonData.broadcast.player] = jsonData.broadcast.points
-         }
+            if (jsonData.broadcast) {
+              if (jsonData.broadcast.points && jsonData.broadcast.player) {
+                leaderBoard[jsonData.broadcast.player] = jsonData.broadcast.points
+              }
+            }
+          }
         }
       }
-    }
+    })
+
   }
-})
-
+  recieveBroadcastScore(true);
 }
-recieveBroadcastScore(true);
-}
-
