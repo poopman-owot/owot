@@ -12,6 +12,7 @@ const sm_halfY = "▫";
 const sm_halfX = "▫";
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
 const sm_offsetX = "ሸ"
+let message = "test";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -159,6 +160,10 @@ let materialOptions = {
   "coin block": {
     materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"coin\\":1,\\"replacement\\":\\"□\\""▣']),
     url: ["lucky_block","coin"],
+  },
+  msg_block: {
+    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"message\\":\\"'+message+'\\""▣']),
+    url: ["msg_block"]
   },
 }
 
@@ -357,6 +362,7 @@ function main() {
   const paste = (pasteString) => {
 
     elm.textInput.value = pasteString;
+
   };
 
   function drawtSelectionCancel() {
@@ -454,7 +460,10 @@ function main() {
     }
   }
 } //end of main
-
+function changeMessage(){
+const val = document.getElementById("block-message").value;
+materialOptions['msg_block'].materialLayer.json = '\x1B$u"\\"message\\":\\"'+val+'\\""▣'
+}
 function loadBG(){
 const val = document.getElementById("bg-url").value;
 state.background = { path: val }; loadBackgroundData(() => { w.redraw(); }, () => { w.redraw(); });
@@ -496,6 +505,7 @@ function mb_ui() {
       if (option) {
         // Print the key name to the console
         let optionUrl = changeOption(option + "");
+console.log(optionUrl);
         let imageHtml = "";
         for (o in optionUrl) {
           let imgSrc = SMImageSrc[optionUrl[o] + ""]
@@ -542,6 +552,9 @@ ${imageHtml}
 
 <input onclick="loadBG()" type="button" value="load Background" style="font-size:0.5em;">
 ${generateOptions}
+<label style="font-size: 0.7em; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: self-end;">Block message
+</label>
+<input id="block-message" oninput="changeMessage()" style="padding:0.1em;font-size:0.5em;">
   </form>
 </div>
 `;
