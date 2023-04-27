@@ -233,7 +233,7 @@ function loadScript(url, callback) {
 // Load helper functions
 loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src.js`, function() {
   // Load images
-  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.53/helper-functions.js`, function() {
+  loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/helper-functions.js`, function() {
 
     loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.48/broadcastWrite.js`, function() {
       loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@vlatest/mario-ui.js`, function() {
@@ -602,6 +602,10 @@ else if (RandomBlockData.upgrade == '1up') {
 
       if (RandomBlockData.reset) {
         character.reset();
+
+      }
+        if (RandomBlockData.background) {
+        state.background = { path: RandomBlockData.background+"" }; loadBackgroundData(() => { w.redraw(); }, () => { w.redraw(); });
 
       }
     }
@@ -1781,6 +1785,7 @@ w.on("cmd", function(arr) {
     if (w.socketChannel !== arr.sender) {
       if (isJsonString(arr.data)) {
         const jsonData = JSON.parse(arr.data);
+
         if (jsonData.broadcast) {
          if(jsonData.broadcast.points && jsonData.broadcast.player){
              leaderBoard[jsonData.broadcast.player] = jsonData.broadcast.points
@@ -1794,5 +1799,4 @@ w.on("cmd", function(arr) {
 }
 recieveBroadcastScore(true);
 }
-
 
