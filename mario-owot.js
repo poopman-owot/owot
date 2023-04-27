@@ -61,7 +61,7 @@ const sm_breakable_Brick = "⩨"
 const sm_breakable_Brick_Stacked = "⩩"
 const sm_spike = "▼"
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛÷ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ⸙";
-const sm_hurts = "⡀⠂⠁";
+const sm_hurts = "";
 const sm_hurts_fire = "⡀⠂⠁";
 const sm_lava = "☵"
 const sm_wide = "ጵዹጺጴቆኖፂፏዶጳቇጿ"
@@ -200,9 +200,11 @@ function detect(characterObject, char, nearbyCell, ingoreList, drawDebug) {
   }
   if (DoesCellContainChars([a, b, c, d], sm_hurts + sm_hurts_fire)[0]) {
     bgColor = 255; //green
+if(!characterObject.isMain){
     characterObject.collideWith("hurt", [a, b, c, d]);
+}
   }
-  if (DoesCellContainChars([a, b, c, d], sm_shell)[0] && this.isEnemy) {
+  if (DoesCellContainChars([a, b, c, d], sm_shell + sm_hurts_fire)[0] && this.isEnemy) {
     bgColor = 255; //green
     characterObject.collideWith("kill", [a, b, c, d]);
   }
@@ -1142,7 +1144,8 @@ function init() {
       //handle auto moving objects
       if (this.autoMoveLaterially) {
         if (blockedDirections.right && !this.isFacingLeft) {
-if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !isEnemyR) ){
+if(
+!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !isEnemyR) ){
           this.isFacingLeft = true;
 }
 
@@ -1150,7 +1153,7 @@ if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !
 if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !isEnemyL) ){
            this.isFacingLeft = false;
 }
-          this.isFacingLeft = false;
+         
         }
       }
       if (this.isShell && (blockedDirections.right  || blockedDirections.left)) {
