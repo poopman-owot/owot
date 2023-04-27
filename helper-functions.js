@@ -231,7 +231,7 @@ function getJSONFromCell(x, y, z, w) {
   if (!link) {
     return false;
   }
-  return JSON.parse("{" + link.replace(/.*\/\//g, "") + "}");
+  return JSON.parse("{" + link + "}");
 }
 
 async function getDeltaTime() {
