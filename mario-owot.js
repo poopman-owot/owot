@@ -21,7 +21,7 @@ w.setFlushInterval(1)
 
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ▼";
 bufferLargeChars = false;
 var charImages = [];
 
@@ -59,6 +59,7 @@ const sm_shell = "⯊"
 const sm_Spawn = "❗";
 const sm_breakable_Brick = "⩨"
 const sm_breakable_Brick_Stacked = "⩩"
+const sm_spike = "▼"
 const passthrough_erase = "▫⡀⠂⠁💩࿙࿚‚ᘯ⠛÷ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ⸙";
 const sm_hurts = "⡀⠂⠁⯋ሸ";
 const sm_hurts_fire = "⡀⠂⠁";
@@ -230,7 +231,7 @@ function loadScript(url, callback) {
   document.head.appendChild(script);
 }
 // Load helper functions
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@1.60/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src.js`, function() {
   // Load images
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.53/helper-functions.js`, function() {
 
@@ -741,7 +742,39 @@ else if (RandomBlockData.upgrade == '1up') {
             }, 100)
           }
         }
+        else if (obj == "breakableBrick_stacked") {
+          if (this.isBig) {
+            playsound("break");
+            this.jumpFrames = 0;
+            if (this.velocity[1] < 0) {
+              this.velocity[1] = 0;
+            }
+
+            broadcastWrite("⣿", "#000", a, b, c, d, true, true);
+            setTimeout(function() {
+              if (getChar(a, b, c, d) == "⣿") {
+                broadcastWrite("⩨", "#000", a, b, c, d, true, true);
+              }
+            }, 100)
+          }
+        }
+        else if (obj == "flipBlock") {
+
+            playsound("break");
+            this.jumpFrames = 0;
+            if (this.velocity[1] < 0) {
+              this.velocity[1] = 0;
+            }
+
+            broadcastWrite("⚊", "#000", a, b, c, d, true, true);
+            setTimeout(function() {
+              if (getChar(a, b, c, d) == "⚊") {
+                broadcastWrite("⚌", "#000", a, b, c, d, true, true);
+              }
+            }, 1000)
+        }
       }
+
       if (obj == "shell") {
         const shell = new Shell(a, b, c, d);
         tempInvincible();
@@ -928,6 +961,9 @@ this.lives--;
       //check if the destination contains anything of value
       const isCoin = sm_coin.includes(getChar(ua, ub, uc, ud));
       const isBreakbleBrick = sm_breakable_Brick.includes(getChar(ua, ub, uc, ud));
+			const isBreakbleBrick_stacked = sm_breakable_Brick_Stacked.includes(getChar(ua, ub, uc, ud));
+      const isSpike = sm_spike.includes(getChar(ua, ub, uc, ud));
+      const isFlipBlock = sm_flipblock.includes(getChar(ua, ub, uc, ud));
       const isRandomBox = sm_random.includes(getChar(ua, ub, uc, ud));
       const isPipeUD = sm_tube_UD.includes(getChar(ua, ub, uc, ud));
       const isPipeLeft = sm_tube_Left.includes(getChar(ua, ub, uc, ud));
@@ -941,6 +977,15 @@ this.lives--;
         }
         if (isBreakbleBrick && this.moveUp) {
           this.collideWith("breakableBrick", [ua, ub, uc, ud]);
+        }
+         if (isBreakbleBrick_stacked && this.moveUp) {
+          this.collideWith("breakableBrick_stacked", [ua, ub, uc, ud]);
+        }
+         if (isFlipBlock && this.moveUp) {
+          this.collideWith("flipBlock", [ua, ub, uc, ud]);
+        }
+        if (isSpike && this.moveUp) {
+          this.collideWith("hurt", [ua, ub, uc, ud]);
         }
         if (isPipeUD && this.isMain && (this.moveUp || this.squat)) {
           this.collideWith("pipe", [ua, ub, uc, ud]);
@@ -1263,7 +1308,14 @@ this.lives--;
 
         // draw the character here
         broadcastWrite(this.eraseChar, "#000", a, b, c, d, true, true);
-        this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ? getChar(dx, dy, dz, dw) : " ";
+        this.eraseChar = (!DoesCellContainChars([dx, dy, dz, dw], passthrough_erase)[0]) ? 
+    //if the object is not eraseable
+//if is the spinning block make it stop spinning
+(DoesCellContainChars([dx, dy, dz, dw], "⚊")[0]) ? "⚌" :
+
+           //else rewrite same char
+ 				getChar(dx, dy, dz, dw) : 
+     " "; //erase
         this.location = [dx, dy, dz, dw];
 
         broadcastWrite(CycleImage(this.cellRep), "#000", dx, dy, dz, dw, true, true);
@@ -1742,6 +1794,5 @@ w.on("cmd", function(arr) {
 }
 recieveBroadcastScore(true);
 }
-
 
 
