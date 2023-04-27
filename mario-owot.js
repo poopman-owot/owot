@@ -616,6 +616,18 @@ function init() {
         });
 
       }
+            if (RandomBlockData.message) {
+
+const [posX,posY] = CellToPixelCoords([fx, fy, fz, fw])
+msgBox = document.getElementById("m-messagebox");
+msgBox.style.display = "block";
+msgBox.style.top = `${posY-cellH}px`;
+msgBox.style.left = `${posX-cellH}px`;
+msgBox.innerText = RandomBlockData.message;
+setTimeout(function(){
+document.getElementById("m-messagebox").style.display = "none";
+},5000)
+      }
     }
 
   }
@@ -736,9 +748,15 @@ function init() {
           this.points += 100;
           playsound("coin");
           broadcastWrite(" ", "#000", a, b, c, d, true, true);
-        } else if (obj == "randomBox") {
+        } else if (obj == "randomBox") 
+
+{
           getBlockData(this, loc);
-        } else if (obj == "breakableBrick") {
+        } 
+else if (obj == "MsgBox") {
+          getBlockData(this, loc);
+        }
+else if (obj == "breakableBrick") {
           if (this.isBig) {
             playsound("break");
             this.jumpFrames = 0;
@@ -974,6 +992,7 @@ function init() {
       const isSpike = sm_spike.includes(getChar(ua, ub, uc, ud));
       const isFlipBlock = sm_flipblock.includes(getChar(ua, ub, uc, ud));
       const isRandomBox = sm_random.includes(getChar(ua, ub, uc, ud));
+      const isMsgBox = sm_msg_block.includes(getChar(ua, ub, uc, ud));
       const isPipeUD = sm_tube_UD.includes(getChar(ua, ub, uc, ud));
       const isPipeLeft = sm_tube_Left.includes(getChar(ua, ub, uc, ud));
       const isPipeRight = sm_tube_Right.includes(getChar(ua, ub, uc, ud));
@@ -983,6 +1002,9 @@ function init() {
         }
         if (isRandomBox && this.moveUp) {
           this.collideWith("randomBox", [ua, ub, uc, ud]);
+        }
+        if (isMsgBox && this.moveUp) {
+          this.collideWith("MsgBox", [ua, ub, uc, ud]);
         }
         if (isBreakbleBrick && this.moveUp) {
           this.collideWith("breakableBrick", [ua, ub, uc, ud]);
