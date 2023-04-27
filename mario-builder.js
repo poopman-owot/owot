@@ -6,7 +6,7 @@ var blockList = {};
 var localCharBuffer = [];
 const mirroredCanvas = document.createElement('canvas');
 const marioSpecChars = "ቶዱዳጰጀደዤፃይያጶጆዸዥጵዹጺጴቆኖፂፏዶጳቇጿየዩጱዼጁድዓጸፆዾጄጷ";
-superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ";
+superMarioChars = "⛹█▓▆▅▄□▤▦▩☵▫╞╡≣║│╔╕╚╛◠╭╮▣ቶዱዳጰጀደዤፃይያጶጆዸዥ⡀⠂⠁࿙࿚‚ጵዹጺጴቆኖፂፏዶጳቇጿᘯᙉየዩጱዼጁድዓጸፆዾጄጷ⚃⚅⩨⩩⠛⣿⚌⚊◩◨⸙ᴥ◙⦈⦇⯊⯋ሸᙁ▼";
 const smSmall = "▫";
 const sm_halfY = "▫";
 const sm_halfX = "▫";
@@ -114,6 +114,10 @@ let materialOptions = {
   quad_stacked: {
     materialLayer: new MaterialLayer("◨◨◨◨◨"),
     url: ["quad_stacked"]
+  },
+  quad_spike: {
+    materialLayer: new MaterialLayer("▼▼▼▼"),
+    url: ["spike_quad"]
   },
   pipe_V: {
     materialLayer: new MaterialLayerVPipe("╔╕║│╚╛"),
@@ -451,7 +455,10 @@ function main() {
   }
 } //end of main
 
-
+function loadBG(){
+const val = document.getElementById("bg-url").value;
+state.background = { path: val }; loadBackgroundData(() => { w.redraw(); }, () => { w.redraw(); });
+};
 function loadScript(url, callback) {
   var file;
 
@@ -523,12 +530,17 @@ ${imageHtml}
     background: #f4f4f4;
     padding: 1em;
     height: 100%;
-    width:11em;
+    width:19em;
 		overflow-y: scroll;
     overflow-x: hidden;
 ">
 <p><strong>Mario Builder</strong> <br><small>Early Beta</small></p>
   <form>
+<label style="font-size: 0.7em; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: self-end;">Background URL
+</label>
+<input id = "bg-url" style="padding:0.1em;font-size:0.5em;">
+
+<input onclick="loadBG()" type="button" value="load Background" style="font-size:0.5em;">
 ${generateOptions}
   </form>
 </div>
@@ -545,11 +557,12 @@ ${generateOptions}
   modal.setMaximumSize(360, 300);
   modal.onSubmit(function() {});
   modal.open();
+  
 }
 
-loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@1.60/mario-image-src.js`, function() {
+loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src.js`, function() {
   loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.48/broadcastWrite.js`, function() {
-    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@v1.53/helper-functions.js`, function() {
+    loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/helper-functions.js`, function() {
       loadScript(`https://cdnjs.cloudflare.com/ajax/libs/picocss/1.5.2/pico.fluid.classless.css`, function() {
         main();
         mb_ui();
