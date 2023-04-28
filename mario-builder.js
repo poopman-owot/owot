@@ -162,7 +162,7 @@ let materialOptions = {
     url: ["lucky_block","coin"],
   },
   msg_block: {
-    materialLayer: new MaterialLayer(["▣", "", "", "▣", "", "", '\x1B$u"\\"message\\":\\"'+message+'\\""▣']),
+    materialLayer: new MaterialLayer(["◙", "", "", "◙", "", "", '\x1B$u"\\"message\\":\\"'+message+'\\""◙']),
     url: ["msg_block"]
   },
 }
@@ -468,6 +468,7 @@ function loadBG(){
 const val = document.getElementById("bg-url").value;
 state.background = { path: val }; loadBackgroundData(() => { w.redraw(); }, () => { w.redraw(); });
 };
+
 function loadScript(url, callback) {
   var file;
 
@@ -548,13 +549,13 @@ ${imageHtml}
   <form>
 <label style="font-size: 0.7em; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: self-end;">Background URL
 </label>
-<input id = "bg-url" style="padding:0.1em;font-size:0.5em;">
+<input id = "bg-url" style="padding:0.1em;font-size:0.5em;" value = "https://ik.imagekit.io/poopman/Mario/bg-03_sm.png?updatedAt=1682617464433">
 
 <input onclick="loadBG()" type="button" value="load Background" style="font-size:0.5em;">
 ${generateOptions}
 <label style="font-size: 0.7em; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-items: self-end;">Block message
 </label>
-<input id="block-message" oninput="changeMessage()" style="padding:0.1em;font-size:0.5em;">
+<input id="block-message" oninput="changeMessage()" style="padding:0.1em;font-size:0.5em;" value = "test">
   </form>
 </div>
 `;
@@ -579,6 +580,7 @@ loadScript(`https://cdn.jsdelivr.net/gh/poopman-owot/owot@latest/mario-image-src
       loadScript(`https://cdnjs.cloudflare.com/ajax/libs/picocss/1.5.2/pico.fluid.classless.css`, function() {
         main();
         mb_ui();
+loadBG();
       })
     })
   })
