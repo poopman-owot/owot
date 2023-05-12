@@ -85,6 +85,7 @@ var muteCB = document.getElementById("m-mute");
 var flyCB = document.getElementById("m-fly");
 var fireCB = document.getElementById("m-fire");
 var invCB = document.getElementById("m-inv");
+var dvCB = document.getElementById("m-dv");
 
 function setMute(value = muteCB.checked) {
   muteCB.checked = value;
@@ -105,7 +106,10 @@ function setInvincibility(value = invCB.checked) {
   invCB.checked = value;
   player.invincible = value;
 }
-
+function keyboardType(value = dvCB.checked) {
+  invCB.checked = value;
+  DVORAK = value;
+}
 function updateCBValues() {
   muteCB = document.getElementById("m-mute");
   flyCB = document.getElementById("m-fly");
