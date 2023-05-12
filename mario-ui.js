@@ -37,6 +37,9 @@ const html = `
         <br>
         <input type="checkbox" onclick="setInvincibility()" id="m-inv">
         <label for="m-inv">Invincibility</label>
+                <br>
+        <input type="checkbox" onclick="keyboardType()" id="m-dv">
+        <label for="m-dv">DVORAK Key support</label>
       </div>
     </div>
   </div>
