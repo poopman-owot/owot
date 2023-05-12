@@ -7,6 +7,7 @@ var blockList = {};
 var globalTickIterator = 0;
 var paused = false;
 var mute = false;
+var DVORAK = false;
 userZoom = 3
 doZoom(300)
 highlight = function() {} //removes the annoying red and yellow highlighting
@@ -1592,10 +1593,10 @@ if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !
   //--------------------------------------------START OF CREATE LISTENERS ----------------------------------------------------------------------
   document.addEventListener("keydown", (event) => {
     player = GetPlayer();
-    const isJumpKey = event.key === "w";
-    const isLeftKey = event.key === "a";
-    const isDownKey = event.key === "s";
-    const isRightKey = event.key === "d";
+    const isJumpKey = DVORAK ? event.key === ",": event.key === "w";
+    const isLeftKey = DVORAK ? event.key === "a": event.key === "a";
+    const isDownKey = DVORAK ? event.key === "o": event.key === "s";
+    const isRightKey = DVORAK ? event.key === "e": event.key === "d";
     const isPauseKey = event.key === "p";
     const isSpaceKey = event.key === " ";
 
@@ -1678,10 +1679,12 @@ if(!(this.isShell||this.isProjectile) || ((this.isShell||this.isProjectile) && !
 
   document.addEventListener("keyup", (event) => {
     const player = GetPlayer();
-    const isJumpKey = event.key === "w";
-    const isLeftKey = event.key === "a";
-    const isDownKey = event.key === "s";
-    const isRightKey = event.key === "d";
+    const isJumpKey = DVORAK ? event.key === ",": event.key === "w";
+    const isLeftKey = DVORAK ? event.key === "a": event.key === "a";
+    const isDownKey = DVORAK ? event.key === "o": event.key === "s";
+    const isRightKey = DVORAK ? event.key === "e": event.key === "d";
+
+
 
     if (isJumpKey) {
       player.moveUp = false;
