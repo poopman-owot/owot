@@ -107,7 +107,7 @@ function setInvincibility(value = invCB.checked) {
   player.invincible = value;
 }
 function keyboardType(value = dvCB.checked) {
-  invCB.checked = value;
+  dvCB.checked = value;
   DVORAK = value;
 }
 function updateCBValues() {
@@ -115,6 +115,7 @@ function updateCBValues() {
   flyCB = document.getElementById("m-fly");
   fireCB = document.getElementById("m-fire");
   invCB = document.getElementById("m-inv");
+  dvCB = document.getElementById("m-dv");
   setFly(player.canFly);
   setFire(player.flowerPower);
 }
