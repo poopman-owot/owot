@@ -90,4 +90,4 @@ chatFilterBtn.onclick = function(){
 setInterval(function(){
 const [whitelist, blacklist] = getFilterLists();
     filterChat(whitelist,blacklist);
-},100)
+},1)
