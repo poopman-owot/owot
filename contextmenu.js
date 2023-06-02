@@ -11,24 +11,24 @@ function BuildContextMenu() { // Get the canvas element
   // Create the buttons
   const buttons = [{
       label: 'paste',
-      action: mobilePaste
+      action: context_Paste
     },
     {
       label: 'copy char',
-      action: mobileCopy
+      action: context_Copy
     },
     {
       label: 'copy char color',
-      action: copyColor
+      action: context_copyColor
 
     },
     {
       label: 'copy char background',
-      action: copyColorBG
+      action: context_copyColorBG
     },
     {
       label: 'region select',
-      action: mobileRegionSelect
+      action: context_RegionSelect
     }
   ];
 
@@ -149,7 +149,7 @@ function BuildContextMenu() { // Get the canvas element
   };
 
   // Function for regionSelect
-  function mobileRegionSelect() {
+  function context_RegionSelect() {
     w.regionSelect.startSelection();
     hideContextMenu();
 
@@ -167,7 +167,7 @@ function BuildContextMenu() { // Get the canvas element
 
   )
 
-  function mobileCopy() {
+  function context_Copy() {
     hideContextMenu();
     var pos_ref = cursorCoords;
     if (pos_ref) {
@@ -182,7 +182,7 @@ function BuildContextMenu() { // Get the canvas element
 
   } {}
 
-  function mobileCopyColor(bg = false) {
+  function context_CopyColor(bg = false) {
     hideContextMenu();
     var pos = currentPosition;
     if (!pos) return;
@@ -200,15 +200,15 @@ function BuildContextMenu() { // Get the canvas element
     }
   }
 
-  function copyColor() {
+  function context_copyColor() {
     mobileCopyColor();
   }
 
-  function copyColorBG() {
+  function context_copyColorBG() {
     mobileCopyColor(true);
   }
 
-  function mobilePaste() {
+  function context_Paste() {
 
     // Check if the Clipboard API is available
     if (navigator.clipboard) {
@@ -216,10 +216,11 @@ function BuildContextMenu() { // Get the canvas element
       navigator.clipboard.readText()
         .then(text => {
           if (isMobile) {
-            elm.textInput.focus(); //force on for phone users
+            alert(text)
           }
+else{
           elm.textInput.value = text;
-          // Do something with the clipboard data
+}
         })
         .catch(error => {
           console.error("Failed to read clipboard data:", error);
