@@ -100,6 +100,7 @@ function BuildContextMenu() { // Get the canvas element
   elm.main_view.addEventListener('click', function() {
     // Hide the context menu
     hideContextMenu();
+
   });
 
   function handleContextMenu(e) {
@@ -125,12 +126,13 @@ function BuildContextMenu() { // Get the canvas element
       elm.textInput.blur();
     } else {
       hideContextMenu();
-			elm.textInput.focus();
+			
     }
   }
 
   function hideContextMenu() {
     contextMenu.style.display = 'none';
+		elm.textInput.focus();
   };
 
   // Function for regionSelect
