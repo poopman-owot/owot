@@ -1,178 +1,334 @@
-var contextMenu = document.createElement("div");
-contextMenu.class = "context-menu";
-contextMenu.id = "contextMenu";
-document.body.appendChild(contextMenu);
-contextMenu.innerHTML = `
-  <ul>
-    <li><button name = "copy-char" ></button><label id="cpy-btn" for="copy-char">Copy char</label></li>
-    <li><button  name = "paste"></button><label id="pst-btn" for="paste">Paste here</label></li>
-    <li><button name = "cc-color"></button><label id="cpy-clr-btn" for="cc-color">Copy char color</label></li>
-    <li><button name = "cc-color-bg"></button><label id="cpy-clr-bg-btn" for="cc-color-bg">Copy char background color</label></li>
-    <li><button name = "RegionSelect"></button><label id="region-select-btn" for="RegionSelect">Region Select</label></li>
-  </ul>
+var isMobile = false;
 
-<style>
+function BuildContextMenu() { // Get the canvas element
+  const canvas = document.getElementById('main_view');
 
-#contextMenu {
-  display: none;
-  position: absolute !important;
- font-family:monospace;
+  // Create a context menu container
+  const contextMenu = document.createElement('div');
+  contextMenu.classList.add('context-menu');
 
-  list-style: none !important;
-  z-index: 1 !important;
-  touch-action: none !important; 
-    padding: 1em !important;
-    min-width: 10em !important;
-    flex-wrap: nowrap !important;
-    place-content: center !important;
-    align-items: center !important;
-}
-#contextMenu button{
-display:none;
+  // Create the buttons
+  const buttons = [{
+      label: 'paste',
+      action: mobilePaste
+    },
+    {
+      label: 'copy char',
+      action: mobileCopy
+    },
+    {
+      label: 'copy char color',
+      action: copyColor
 
-}
-#contextMenu ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
+    },
+    {
+      label: 'copy char background',
+      action: copyColorBG
+    },
+    {
+      label: 'region select',
+      action: button4Function
+    }
+  ];
 
-#contextMenu li {
-  padding: 8px 12px;
-  cursor: pointer;
-background-color: #E5E5FF;
-  border: 1px solid #ccc !important;
-}
-#contextMenu li:hover {
-  background-color: #f4f4f4;
-}
-</style>
-`;
+  function CreateContextMenuButtons() {
+    // Create buttons and attach event listeners
+    buttons.forEach(button => {
+      const buttonElement = document.createElement('button');
+      buttonElement.textContent = button.label;
 
-const targetElement = document;
-let touchTimer;
+      // Attach the custom function to the button click event
+      buttonElement.addEventListener('click', button.action);
+      // Append the button to the context menu
+      contextMenu.appendChild(buttonElement);
+    });
+  }
+  CreateContextMenuButtons();
+  // Append the context menu to the document body
+  document.body.appendChild(contextMenu);
 
-// Show the context menu on right-click or long press
-targetElement.addEventListener('contextmenu', handleContextMenu);
-targetElement.addEventListener('touchstart', handleTouchStart);
-targetElement.addEventListener('touchend', handleTouchEnd);
+  // Add event listener to show the context menu
+  elm.main_view.addEventListener('contextmenu', function(e) {
+    handleContextMenu(e);
+  });
+  elm.main_view.addEventListener('contextmenu', function(e) {
+    handleContextMenu(e);
+  });
+  let startX = 0;
+  let startY = 0;
+  let isDraggingMobile = false;
+  // Add event listener to handle long touch and show the context menu
+  elm.main_view.addEventListener('touchstart', function(e) {
+    if (!isMobile) {
+      setup_Mobile_CSS();
+    }
+    //handle dragging for mobile without a context menu
+    const touch = event.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    isDraggingMobile = false;
 
-// Hide the context menu when clicked outside
-document.addEventListener('click', function(e) {
 
-  hideContextMenu();
-
-});
-
-function handleContextMenu(e) {
-  e.preventDefault();
-  showContextMenu(e.pageX, e.pageY);
-}
-
-function handleTouchStart(e) {
-  touchTimer = setTimeout(() => {
     e.preventDefault();
-    showContextMenu(e.touches[0].pageX, e.touches[0].pageY);
-  }, 500); // Adjust the duration as needed
-}
+    hideContextMenu();
+    touchTimeout = setTimeout(function() {
+      handleContextMenu(e);
 
-function handleTouchEnd() {
-  clearTimeout(touchTimer);
-}
+    }, 500); // Adjust the timeout duration (in milliseconds) to define the long touch duration
+  });
 
-// Position and show the context menu
-function showContextMenu(x, y) {
-  contextMenu.style.left = `${x}px`;
-  contextMenu.style.top = `${y}px`;
-  contextMenu.style.display = 'flex';
-  contextMenu.style.position = "absolute";
+  // Add event listener to handle touchend and clear the timeout
+  elm.main_view.addEventListener('touchend', function() {
+    clearTimeout(touchTimeout);
+  });
 
 
+  // Add event listener to track touchmove event
+  elm.main_view.addEventListener('touchmove', function(event) {
+    const touch = event.touches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+
+    // Calculate the distance moved
+    const distanceX = Math.abs(currentX - startX);
+    const distanceY = Math.abs(currentY - startY);
+
+    // Check if the distance moved is significant
+    if (distanceX > 10 || distanceY > 10) {
+      isDraggingMobile = true;
+    }
+  });
 
 
 
-}
+  elm.main_view.addEventListener('click', function() {
+    // Hide the context menu
+    hideContextMenu();
+  });
 
-// Hide the context menu
-function hideContextMenu() {
-  contextMenu.style.display = 'none';
-}
-copybtn = document.getElementById("cpy-btn");
-pst_btn = document.getElementById("pst-btn");
-cpy_clr_btn = document.getElementById("cpy-clr-btn");
-cpy_clr_bg_btn = document.getElementById("cpy-clr-bg-btn");
-region_select_btn = document.getElementById("region-select-btn");
-copybtn.onclick = function() {
-  forceCopy()
-};
-
-pst_btn.onclick = function() {
-  forcePaste()
-};
-
-cpy_clr_btn.onclick = function() {
-
-  forceCopyColor()
-};
-cpy_clr_bg_btn.onclick = function() {
-
-  forceCopyColor(true)
-};
-
-region_select_btn.onclick = function() {
-
-  w.regionSelect.startSelection();
-
-};
-
-
-function forceCopy() {
-  var pos_ref = cursorCoords;
-  if (pos_ref) {
-    var tileX = pos_ref[0];
-    var tileY = pos_ref[1];
-    var charX = pos_ref[2];
-    var charY = pos_ref[3];
-    var char = getChar(tileX, tileY, charX, charY);
-    char = char.replace(/\r|\n/g, " ");
-    w.clipboard.copy(char);
-  }
-
-}
-
-function forceCopyColor(bg = false) {
-  console.log(bg)
-  var pos = currentPosition;
-  if (!pos) return;
-  var tileX = pos[0];
-  var tileY = pos[1];
-  var charX = pos[2];
-  var charY = pos[3];
-  var color;
-  if (!bg) {
-    color = getCharColor();
-    w.changeColor(color);
-  } else {
-    color = getCharBgColor();
-    w.changeBgColor(color);
-  }
-}
-
-function forcePaste() {
-
-  // Check if the Clipboard API is available
-  if (navigator.clipboard) {
-    // Read clipboard data
-    navigator.clipboard.readText()
-      .then(text => {
-        elm.textInput.value = text;
-        // Do something with the clipboard data
-      })
-      .catch(error => {
-        console.error("Failed to read clipboard data:", error);
+  function handleContextMenu(e) {
+    if (w.regionSelect.isSelecting == false && isDraggingMobile == false) {
+      var pageX = Math.trunc((e.type == "touchstart" ? e.targetTouches[0].pageX : e.pageX) * zoomRatio);
+      var pageY = Math.trunc((e.type == "touchstart" ? e.targetTouches[0].pageY : e.pageY) * zoomRatio);
+      var pos = getTileCoordsFromMouseCoords(pageX, pageY);
+      w.emit("mouseUp", {
+        tileX: pos[0],
+        tileY: pos[1],
+        charX: pos[2],
+        charY: pos[3],
+        pageX: pageX,
+        pageY: pageY
       });
-  } else {
-    console.error("Clipboard API not available");
+      renderCursor(pos)
+      e.preventDefault();
+
+      // Position the context menu at the click location
+      contextMenu.style.left = (e.type == "touchstart" ? e.targetTouches[0].pageX : e.pageX) + 'px';
+      contextMenu.style.top = (e.type == "touchstart" ? e.targetTouches[0].pageY : e.pageY) + 'px';
+      contextMenu.style.display = 'block';
+      elm.textInput.blur();
+    } else {
+      hideContextMenu();
+    }
   }
 
+  function hideContextMenu() {
+    contextMenu.style.display = 'none';
+  };
+
+  // Function for regionSelect
+  function button4Function() {
+    w.regionSelect.startSelection();
+    hideContextMenu();
+
+  }
+  w.regionSelect.onselection(
+    function() {
+      if (isMobile) {
+        Modal.current.setMinimumSize(document.body.clientWidth, document.body.clientheight);
+        Modal.current.setMaximumSize(document.body.clientWidth, document.body.clientheight);
+      }
+    }
+
+  )
+
+  function mobileCopy() {
+    hideContextMenu();
+    var pos_ref = cursorCoords;
+    if (pos_ref) {
+      var tileX = pos_ref[0];
+      var tileY = pos_ref[1];
+      var charX = pos_ref[2];
+      var charY = pos_ref[3];
+      var char = getChar(tileX, tileY, charX, charY);
+      char = char.replace(/\r|\n/g, " ");
+      w.clipboard.copy(char);
+    }
+
+  } {}
+
+  function mobileCopyColor(bg = false) {
+    console.log(bg)
+    hideContextMenu();
+    var pos = currentPosition;
+    if (!pos) return;
+    var tileX = pos[0];
+    var tileY = pos[1];
+    var charX = pos[2];
+    var charY = pos[3];
+    var color;
+    if (!bg) {
+      color = getCharColor();
+      w.changeColor(color);
+    } else {
+      color = getCharBgColor();
+      w.changeBgColor(color);
+    }
+  }
+
+  function copyColor() {
+    mobileCopyColor();
+  }
+
+  function copyColorBG() {
+    mobileCopyColor(true);
+  }
+
+  function mobilePaste() {
+
+    // Check if the Clipboard API is available
+    if (navigator.clipboard) {
+      // Read clipboard data
+      navigator.clipboard.readText()
+        .then(text => {
+          elm.textInput.value = text;
+          // Do something with the clipboard data
+        })
+        .catch(error => {
+          console.error("Failed to read clipboard data:", error);
+        });
+    } else {
+      console.error("Clipboard API not available");
+    }
+
+  }
+
+  function isMobileDevice() {
+    const userAgent = navigator.userAgent;
+    return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  }
+
+  if (isMobileDevice()) {
+    setup_Mobile_CSS();
+  } else {
+
+  }
 }
+
+BuildContextMenu();
+
+function setup_Mobile_CSS() {
+  isMobile = true;
+  //add "mobile" class to elements
+  for (const key of Object.keys(elm)) {
+    const i = elm[key];
+    if (i instanceof HTMLElement) {
+      i.classList.add("mobile");
+    }
+  }
+
+  elm.menu_elm.addEventListener("touchstart", function() {
+    if (menu.visible) {
+      menu.unpin();
+      menu.hideNow();
+    }
+  })
+
+}
+
+
+styleDiv = document.createElement('style');
+styleDiv.innerHTML = `
+.mobile + #modal_overlay {
+    justify-content: normal !important;
+    align-items: normal;
+}
+.mobile + #modal_overlay {
+    /* color: red; */
+    font-size: x-large;
+}
+
+.mobile + #modal_overlay button {
+    font-size: x-large;
+}
+#menu.mobile, #chat_open.mobile
+{
+    font-size: xx-large;
+    padding: 0.4em;
+    display: flex;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: space-around;
+    align-items: center;
+}
+#chat_window.mobile {
+    width: 100%!important;
+    height: 100%!important;
+    z-index: 100;
+    position: fixed;
+}
+#nav.mobile {
+    top: 4.1em!important;
+    min-width: max-content;
+    font-size: unset;
+    overflow-y: scroll;
+    height: max-content;
+    margin: 0px;
+    padding: 1em;
+}
+.mobile #chat_upper .chat_tab_button, .mobile #chat_lower #chatsend {
+    font-size: large;
+    padding: 0.5em;
+}
+.mobile #chat_close {
+    font-size: xx-large;
+    padding: 0.3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mobile #usr_online {
+    font-size: smaller;
+}
+#nav.mobile li {
+    padding: 1em;
+    margin: 0px;
+}
+.context-menu {
+  position: fixed;
+  display: none;
+  background-color: #fff;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  z-index: 999;
+}
+
+.context-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border: none;
+  background-color: transparent;
+  color: #333;
+  text-align: left;
+  cursor:pointer;
+}
+
+.context-menu button:hover {
+  background-color: #f0f0f0;
+}
+
+
+`
+document.body.appendChild(styleDiv)
