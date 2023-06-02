@@ -209,25 +209,21 @@ function BuildContextMenu() { // Get the canvas element
   }
 
   function context_Paste() {
-
-    // Check if the Clipboard API is available
-    if (navigator.clipboard) {
-      // Read clipboard data
-      navigator.clipboard.readText()
-        .then(text => {
-          if (isMobile) {
-            alert(text)
-          }
-else{
+    // Request permission to access the clipboard
+    navigator.permissions.query({
+      name: 'clipboard-read'
+    }).then(function(result) {
+      if (result.state === 'granted' || result.state === 'prompt') {
+        // Read the clipboard contents
+        navigator.clipboard.readText().then(function(text) {
+          // Do something with the pasted text
           elm.textInput.value = text;
-}
-        })
-        .catch(error => {
-          console.error("Failed to read clipboard data:", error);
+        }).catch(function(error) {
+          console.error('Failed to read clipboard contents:', error);
         });
-    } else {
-      console.error("Clipboard API not available");
-    }
+      }
+    })
+
     hideContextMenu();
   }
 
