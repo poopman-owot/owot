@@ -27,7 +27,7 @@ function BuildContextMenu() { // Get the canvas element
     },
     {
       label: 'region select',
-      action: button4Function
+      action: mobileRegionSelect
     }
   ];
 
@@ -47,10 +47,6 @@ function BuildContextMenu() { // Get the canvas element
   // Append the context menu to the document body
   document.body.appendChild(contextMenu);
 
-  // Add event listener to show the context menu
-  elm.main_view.addEventListener('contextmenu', function(e) {
-    handleContextMenu(e);
-  });
   elm.main_view.addEventListener('contextmenu', function(e) {
     handleContextMenu(e);
   });
@@ -129,6 +125,7 @@ function BuildContextMenu() { // Get the canvas element
       elm.textInput.blur();
     } else {
       hideContextMenu();
+			elm.textInput.focus();
     }
   }
 
@@ -137,7 +134,7 @@ function BuildContextMenu() { // Get the canvas element
   };
 
   // Function for regionSelect
-  function button4Function() {
+  function mobileRegionSelect() {
     w.regionSelect.startSelection();
     hideContextMenu();
 
