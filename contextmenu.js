@@ -1,4 +1,5 @@
 var isMobile = false;
+var showKeyboard = false;
 
 function BuildContextMenu() { // Get the canvas element
   const canvas = document.getElementById('main_view');
@@ -123,16 +124,28 @@ function BuildContextMenu() { // Get the canvas element
       contextMenu.style.left = (e.type == "touchstart" ? e.targetTouches[0].pageX : e.pageX) + 'px';
       contextMenu.style.top = (e.type == "touchstart" ? e.targetTouches[0].pageY : e.pageY) + 'px';
       contextMenu.style.display = 'block';
-      elm.textInput.focus();
+      SetKeyboard();
+
     } else {
       hideContextMenu();
-			
+
     }
+  }
+
+  function SetKeyboard() {
+    if (isMobile) {
+      if (showKeyboard) {
+        elm.textInput.focus();
+      } else {
+        elm.textInput.blur();
+      }
+    }
+
   }
 
   function hideContextMenu() {
     contextMenu.style.display = 'none';
-		elm.textInput.focus();
+    SetKeyboard();
   };
 
   // Function for regionSelect
@@ -146,6 +159,9 @@ function BuildContextMenu() { // Get the canvas element
       if (isMobile) {
         Modal.current.setMinimumSize(document.body.clientWidth, document.body.clientheight);
         Modal.current.setMaximumSize(document.body.clientWidth, document.body.clientheight);
+        if (isMobile) {
+          elm.textInput.blur(); //this should be force since the keyboard will cover the close button.
+        }
       }
     }
 
@@ -167,7 +183,6 @@ function BuildContextMenu() { // Get the canvas element
   } {}
 
   function mobileCopyColor(bg = false) {
-    console.log(bg)
     hideContextMenu();
     var pos = currentPosition;
     if (!pos) return;
@@ -200,6 +215,9 @@ function BuildContextMenu() { // Get the canvas element
       // Read clipboard data
       navigator.clipboard.readText()
         .then(text => {
+          if (isMobile) {
+            elm.textInput.focus(); //force on for phone users
+          }
           elm.textInput.value = text;
           // Do something with the clipboard data
         })
@@ -209,7 +227,7 @@ function BuildContextMenu() { // Get the canvas element
     } else {
       console.error("Clipboard API not available");
     }
-
+    hideContextMenu();
   }
 
   function isMobileDevice() {
@@ -243,11 +261,30 @@ function setup_Mobile_CSS() {
     }
   })
 
+  elm.chat_open.innerHTML = `<span style = "display: flex;flex-wrap: nowrap;align-content: center;justify-content: center; align-items: center;"><span id ="chat-icon">🗨️</span><b id="total_unread" class="unread mobile" style="display:none">(-)</b></span>`;
+  elm.menu_elm.innerText = "⋮";
+  var keyboard_elm = document.createElement('div');
+  keyboard_elm.id = "keyboard";
+  keyboard_elm.innerHTML = `
+<span id="keyboard_icon">⌨️</span>
+
+`;
+  document.body.appendChild(keyboard_elm);
+
+  keyboard_elm.addEventListener('touchstart', function(e) {
+    showKeyboard = !showKeyboard;
+  })
 }
 
 
 styleDiv = document.createElement('style');
 styleDiv.innerHTML = `
+#chat-icon {
+    position: absolute;
+    top: 0.25em;
+    left: 0.25em;
+    z-index: 1;
+}
 .mobile + #modal_overlay {
     justify-content: normal !important;
     align-items: normal;
@@ -260,15 +297,18 @@ styleDiv.innerHTML = `
 .mobile + #modal_overlay button {
     font-size: x-large;
 }
-#menu.mobile, #chat_open.mobile
-{
+#menu.mobile, #chat_open.mobile, #keyboard{
     font-size: xx-large;
     padding: 0.4em;
     display: flex;
     flex-wrap: nowrap;
     align-content: center;
-    justify-content: space-around;
+    justify-content: center;
     align-items: center;
+    width: 1em;
+    height: 1em;
+position: fixed;
+    top: 0px;
 }
 #chat_window.mobile {
     width: 100%!important;
@@ -300,7 +340,7 @@ styleDiv.innerHTML = `
     font-size: smaller;
 }
 #nav.mobile li {
-    padding: 1em;
+    padding: 0.5em;
     margin: 0px;
 }
 .context-menu {
@@ -327,7 +367,15 @@ styleDiv.innerHTML = `
 .context-menu button:hover {
   background-color: #f0f0f0;
 }
-
-
+.mobile#total_unread {
+    z-index: 2;
+		font-family: monospace;
+}
+#keyboard {
+    left: 50%;
+    margin-left: -0.75em;
+    background: #8aa2c5;
+}
 `
+
 document.body.appendChild(styleDiv)
