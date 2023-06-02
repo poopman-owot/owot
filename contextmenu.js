@@ -37,7 +37,7 @@ function BuildContextMenu() { // Get the canvas element
     buttons.forEach(button => {
       const buttonElement = document.createElement('button');
       buttonElement.textContent = button.label;
-
+      buttonElement.id = `context-${button.label.split(" ")[0]}`
       // Attach the custom function to the button click event
       buttonElement.addEventListener('click', button.action);
       // Append the button to the context menu
@@ -237,45 +237,46 @@ function BuildContextMenu() { // Get the canvas element
   } else {
 
   }
-}
 
-BuildContextMenu();
 
-function setup_Mobile_CSS() {
-  isMobile = true;
-  //add "mobile" class to elements
-  for (const key of Object.keys(elm)) {
-    const i = elm[key];
-    if (i instanceof HTMLElement) {
-      i.classList.add("mobile");
+  function setup_Mobile_CSS() {
+    isMobile = true;
+    //add "mobile" class to elements
+    for (const key of Object.keys(elm)) {
+      const i = elm[key];
+      if (i instanceof HTMLElement) {
+        i.classList.add("mobile");
+      }
     }
-  }
 
-  elm.menu_elm.addEventListener("touchstart", function() {
-    if (menu.visible) {
-      menu.unpin();
-      menu.hideNow();
-    }
-  })
+    elm.menu_elm.addEventListener("touchstart", function() {
+      if (menu.visible) {
+        menu.unpin();
+        menu.hideNow();
+      }
+    })
 
-  elm.chat_open.innerHTML = `<span style = "display: flex;flex-wrap: nowrap;align-content: center;justify-content: center; align-items: center;"><span id ="chat-icon">🗨️</span><b id="total_unread" class="unread mobile" style="display:none">(-)</b></span>`;
-  elm.menu_elm.innerText = "⋮";
-  var keyboard_elm = document.createElement('div');
-  keyboard_elm.id = "keyboard";
-  keyboard_elm.innerHTML = `
+    elm.chat_open.innerHTML = `<span style = "display: flex;flex-wrap: nowrap;align-content: center;justify-content: center; align-items: center;"><span id ="chat-icon">🗨️</span><b id="total_unread" class="unread mobile" style="display:none">(-)</b></span>`;
+    elm.menu_elm.innerText = "⋮";
+    var keyboard_elm = document.createElement('div');
+    keyboard_elm.id = "keyboard";
+    keyboard_elm.innerHTML = `
 <span id="keyboard_icon">⌨️</span>
 
 `;
-  document.body.appendChild(keyboard_elm);
+    document.body.appendChild(keyboard_elm);
 
-  keyboard_elm.addEventListener('touchstart', function(e) {
-    showKeyboard = !showKeyboard;
-  })
-}
+    keyboard_elm.addEventListener('touchstart', function(e) {
+      showKeyboard = !showKeyboard;
+      SetKeyboard();
+    })
+
+    document.getElementById("context-paste").style.display = "none"
+  }
 
 
-styleDiv = document.createElement('style');
-styleDiv.innerHTML = `
+  styleDiv = document.createElement('style');
+  styleDiv.innerHTML = `
 #chat-icon {
     position: absolute;
     top: 0.25em;
@@ -375,4 +376,7 @@ position: fixed;
 }
 `
 
-document.body.appendChild(styleDiv)
+  document.body.appendChild(styleDiv)
+}
+
+BuildContextMenu();
