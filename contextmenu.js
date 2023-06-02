@@ -123,7 +123,7 @@ function BuildContextMenu() { // Get the canvas element
       contextMenu.style.left = (e.type == "touchstart" ? e.targetTouches[0].pageX : e.pageX) + 'px';
       contextMenu.style.top = (e.type == "touchstart" ? e.targetTouches[0].pageY : e.pageY) + 'px';
       contextMenu.style.display = 'block';
-      elm.textInput.blur();
+      elm.textInput.focus();
     } else {
       hideContextMenu();
 			
