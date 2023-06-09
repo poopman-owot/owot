@@ -9,7 +9,7 @@ var paused = false;
 var mute = false;
 var DVORAK = false;
 userZoom = 3
-doZoom(300)
+changeZoom(300)
 highlight = function() {} //removes the annoying red and yellow highlighting
 function setFire() {}
 useHighlight = false;
