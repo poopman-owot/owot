@@ -1843,3 +1843,79 @@ text-align:start
   }
   recieveBroadcastScore(true);
 }
+function drawTile(tileX, tileY) {
+	var tile = Tile.get(tileX, tileY);
+	if(!tile) return;
+
+	var hasDrawn = false;
+
+	var tileScreenPos = getTileScreenPosition(tileX, tileY);
+	var offsetX = Math.floor(tileScreenPos[0]);
+	var offsetY = Math.floor(tileScreenPos[1]);
+
+	var clamp = getTileScreenPosition(tileX + 1, tileY + 1);
+	var clampW = Math.floor(clamp[0]) - offsetX;
+	var clampH = Math.floor(clamp[1]) - offsetY;
+
+	if(transparentBackground) {
+		textRenderCtx.clearRect(0, 0, textRenderCanvas.width, textRenderCanvas.width);
+	} else {
+		var cursorVisibility = cursorRenderingEnabled && cursorCoords && cursorCoords[0] == tileX && cursorCoords[1] == tileY;
+		var dBack = renderTileBackground(textRenderCtx, 0, 0, tile, tileX, tileY, cursorVisibility);
+		if(dBack) {
+			hasDrawn = true;
+		}
+	}
+
+	if(backgroundEnabled) {
+		var dImage = renderTileBackgroundImage(textRenderCtx, tileX, tileY, 0, 0);
+		if(dImage) {
+			hasDrawn = true;
+		}
+	}
+
+	if(colorsEnabled) {
+		var dCell = renderCellBgColors(textRenderCtx, tileX, tileY, clampW, clampH);
+		if(dCell) {
+			hasDrawn = true;
+		}
+	}
+
+	if(!bufferLargeChars) {
+		var dCont = renderContent(textRenderCtx, tileX, tileY, clampW, clampH, 0, 0);
+		if(dCont) {
+			hasDrawn = true;
+		}
+	} else {
+		var d1 = renderContent(textRenderCtx, tileX - 1, tileY, clampW, clampH, clampW * -1, 0, [tileC - 1, 0, tileC - 1, tileR - 1], true); // left
+		var d2 = renderContent(textRenderCtx, tileX, tileY, clampW, clampH, 0, 0); // main
+		var d3 = renderContent(textRenderCtx, tileX - 1, tileY + 1, clampW, clampH, clampW * -1, clampH * 1, [tileC - 1, 0, tileC - 1, 0], true); // bottom-left corner
+		var d4 = renderContent(textRenderCtx, tileX, tileY + 1, clampW, clampH, 0, clampH * 1, [0, 0, tileC - 1, 0], true); // bottom
+		if(d1 || d2 || d3 || d4) {
+			hasDrawn = true;
+		}
+	}
+
+	if(gridEnabled) {
+		var gridColor = int_to_hexcode(0xFFFFFF - resolveColorValue(getTileBackgroundColor(tile)));
+		drawGrid(textRenderCtx, gridColor, 0, 0);
+		hasDrawn = true;
+	}
+
+	if(hasDrawn) {
+		var tileImage = loadTileFromPool(tileX, tileY);
+		var poolCtx = tileImage.pool.ctx;
+		var poolCanv = tileImage.pool.canv;
+		var poolX = tileImage.poolX;
+		var poolY = tileImage.poolY;
+
+		// we read a single pixel to force the browser to draw immediately,
+		// since we want to precisely control the timing for the queue
+		//textRenderCtx.getImageData(0, 0, 1, 1);
+
+		poolCtx.clearRect(poolX, poolY, tileWidth, tileHeight);
+		poolCtx.drawImage(textRenderCanvas, 0, 0, tileWidth, tileHeight, poolX, poolY, tileWidth, tileHeight);
+	} else {
+		markTileFromPoolAsEmpty(tileX, tileY);
+	}
+}
