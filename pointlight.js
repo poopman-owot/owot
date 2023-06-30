@@ -1,3 +1,22 @@
+var grad = document.createElement("div");
+grad.style.position = "fixed";
+    grad.style.top = 0;
+    grad.style.left = 0;
+    grad.style.width = "100%";
+    grad.style.height = "100%";
+grad.style.pointerEvents= "none";
+grad.id="grad";
+    
+
+function setGrad(pos){
+    grad.innerHTML = `<style>
+    #grad{
+    background: radial-gradient( circle at ${pos[0]}px ${pos[1]}px, #fff0 0%, #000 50% );
+    }
+    </style>`
+}
+elm.main_view.appendChild(grad)
+setGrad(0,0)
 function map_range(value, low1, high1, low2, high2) {
     return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 }
@@ -21,37 +40,35 @@ function CellToPixelCoords(tileX, tileY, charX, charY) {
 
 
 w.registerHook("renderchar", function($, r, o, a, e, d, s, f, h, l) {
-if($ !== 9608){
-    r.fillStyle = "white";
-     r.fillRect(s, f, h, l);
-}
+
   var t = String.fromCharCode($);
 	var c = getCharInfo(o, a, e, d);
   var pos1 = CellToPixelCoords(cursorCoords);
   var pos2 = CellToPixelCoords([o, a, e, d]);
   var [p1,p2] = [pos1[0] - pos2[0],pos1[1] - pos2[1]];
-    var dis = (map_range(Math.abs(p1),0,200,200,0) + map_range(Math.abs(p2),0,200,200,0)) /2;
-    dis = Math.round(Math.max(Math.min(dis, 200), 0))
+    var dis = (map_range(Math.abs(p1),0,1000,200,-100) + map_range(Math.abs(p2),0,1000,200,-100)) /2;
+    dis = Math.round(Math.max(Math.min(dis, 200), -100))
     _ = int_to_rgb(c.color);
-   p1 = Math.round(Math.max(Math.min(p1, 1), -1))*-1;
-   p2 = Math.round(Math.max(Math.min(p2, 1), -1))*-1;
+   p1 = Math.round(Math.max(Math.min(p1, 1000), -1000))*-1;
+   p2 = Math.round(Math.max(Math.min(p2, 1000), -1000))*-1;
 
     var shadow = ``;
         
     if(dis<=200 && $ !== 32 && $ !== 9608 ){
-  for(i=0;i<5;i++){
-    shadow+=  `drop-shadow(${i*p1}px ${i*p2}px rgba(0,0,0,${1-(i/6)})) `
+  for(i=0;i<3;i++){
+      
+    shadow+=  `drop-shadow(${(i+1)*(p1*0.01)}px ${(i+1)*(p2*0.01)}px ${((Math.abs(p1)+Math.abs(p2))/2)*0.008}px rgba(0,0,0,${1-(i/6)})) `
   }
     }
-     if($ == 32) { // spaces
-    r.fillStyle = "white";
-     r.fillRect(s, f, h, l);
-    }
-  r.filter = shadow + ` brightness(${dis}%)`;
+
+  r.filter = shadow + `brightness(${dis}%)`;
 
 
 
 }), w.redraw();
 w.on("cursorMove",function(){
+
+setGrad(CellToPixelCoords(cursorCoords));
+    
    w.redraw(); 
 })
