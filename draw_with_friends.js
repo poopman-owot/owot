@@ -110,15 +110,15 @@ run(app.cmd, function(e) {
 // Setup main appliction functions
 function onMessageReceived(e) {
   if (e.namespace == "linedraw") {
-    addToShiftArray(localDraw, e.data, 10000);
+    addToShiftArray(localDraw, e.data, 3000);
   } else if (e.namespace == "linedraw_history" && e.data[0] !== app.id) {
-if(historyDraw.length < e.data[2] && localDraw.length < 5000 ){
+if(historyDraw.length < e.data[2] && localDraw.length < 3000 ){
       e.data[1].forEach((element) => {
        
         if (element.length) {
 
-addToShiftArray(historyDraw, convertToNestedArray(element), 10000);
-addToShiftArray(localDraw, convertToNestedArray(element), 10000);
+addToShiftArray(historyDraw, convertToNestedArray(element), 3000);
+addToShiftArray(localDraw, convertToNestedArray(element), 3000);
           
         }
       })
