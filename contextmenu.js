@@ -63,7 +63,7 @@ function BuildContextMenu() { // Get the canvas element
     startX = touch.clientX;
     startY = touch.clientY;
     isDraggingMobile = false;
-
+    elm.textInput.focus();
 
     e.preventDefault();
     hideContextMenu();
