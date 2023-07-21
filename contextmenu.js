@@ -1,5 +1,4 @@
 var isMobile = false;
-var showKeyboard = false;
 
 function BuildContextMenu() { // Get the canvas element
   const canvas = document.getElementById('main_view');
@@ -124,7 +123,7 @@ function BuildContextMenu() { // Get the canvas element
       contextMenu.style.left = (e.type == "touchstart" ? e.targetTouches[0].pageX : e.pageX) + 'px';
       contextMenu.style.top = (e.type == "touchstart" ? e.targetTouches[0].pageY : e.pageY) + 'px';
       contextMenu.style.display = 'block';
-      SetKeyboard();
+     
 
     } else {
       hideContextMenu();
@@ -132,20 +131,9 @@ function BuildContextMenu() { // Get the canvas element
     }
   }
 
-  function SetKeyboard() {
-    if (isMobile) {
-      if (showKeyboard) {
-        elm.textInput.focus();
-      } else {
-        elm.textInput.blur();
-      }
-    }
-
-  }
-
   function hideContextMenu() {
     contextMenu.style.display = 'none';
-    SetKeyboard();
+   
   };
 
   // Function for regionSelect
@@ -259,19 +247,6 @@ function BuildContextMenu() { // Get the canvas element
 
     elm.chat_open.innerHTML = `<span style = "display: flex;flex-wrap: nowrap;align-content: center;justify-content: center; align-items: center;"><span id ="chat-icon">🗨️</span><b id="total_unread" class="unread mobile" style="display:none">(-)</b></span>`;
     elm.menu_elm.innerText = "⋮";
-    var keyboard_elm = document.createElement('div');
-    keyboard_elm.id = "keyboard";
-    keyboard_elm.innerHTML = `
-<span id="keyboard_icon">⌨️</span>
-
-`;
-    document.body.appendChild(keyboard_elm);
-
-    keyboard_elm.addEventListener('touchstart', function(e) {
-      showKeyboard = !showKeyboard;
-      SetKeyboard();
-    })
-
     document.getElementById("context-paste").style.display = "none"
   }
 
@@ -391,10 +366,10 @@ function switchInputType(from, to) {
 
 function handlePasteData(data) {
   switchInputType("input", "textarea")
-    elm.textInput.value = data;
-    setTimeout(function() {
-      switchInputType("textarea", "input");
-    }, 10)
+  elm.textInput.value = data;
+  setTimeout(function() {
+    switchInputType("textarea", "input");
+  }, 10)
 }
 
 function onPaste(e) {
@@ -405,4 +380,3 @@ function onPaste(e) {
     handlePasteData(pastedContent);
   }
 }
-
