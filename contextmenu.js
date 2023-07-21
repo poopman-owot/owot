@@ -241,6 +241,7 @@ function BuildContextMenu() { // Get the canvas element
 
   function setup_Mobile_CSS() {
     isMobile = true;
+    switchInputType("textarea", "input"); // start using the combined input technique
     //add "mobile" class to elements
     for (const key of Object.keys(elm)) {
       const i = elm[key];
@@ -380,3 +381,28 @@ position: fixed;
 }
 
 BuildContextMenu();
+
+function switchInputType(from, to) {
+  elm.textInput.outerHTML = elm.textInput.outerHTML.replaceAll(from, to);
+  elm.textInput = document.getElementById("textInput");
+  elm.textInput.type = "password";
+  elm.textInput.addEventListener('paste', onPaste);
+}
+
+function handlePasteData(data) {
+  switchInputType("input", "textarea")
+    elm.textInput.value = data;
+    setTimeout(function() {
+      switchInputType("textarea", "input");
+    }, 10)
+}
+
+function onPaste(e) {
+  const pastedContent = structuredClone((e.clipboardData || window.clipboardData).getData('text'));
+  const hasNewlines = /\r|\n/.test(pastedContent);
+  if (hasNewlines) {
+    e.preventDefault();
+    handlePasteData(pastedContent);
+  }
+}
+
